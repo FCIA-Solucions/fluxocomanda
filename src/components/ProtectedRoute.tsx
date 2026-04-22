@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const { status, loading: subLoading } = useSubscription();
+  const { isBlocked, loading: subLoading } = useSubscription();
 
   if (loading || (user && subLoading)) {
     return (
@@ -19,7 +19,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  if (status === "expired") {
+  if (isBlocked) {
     return <Navigate to="/assinatura" replace />;
   }
 
