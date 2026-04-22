@@ -80,6 +80,16 @@ export default function Auth() {
     setPassword("");
   };
 
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setGoogleLoading(false);
+      toast({ title: "Não foi possível entrar com Google", description: error.message, variant: "destructive" });
+    }
+    // success: Supabase redirects to Google; loading state ends with the page unload
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
