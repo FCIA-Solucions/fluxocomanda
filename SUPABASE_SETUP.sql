@@ -1,5 +1,5 @@
 -- ============================================================
--- FluxoComanda — Schema completo (Fase 1 + 2 + 3)
+-- FluxoComanda — Schema completo (Fase 1 + 2 + 3 + Meu Negócio)
 -- Execute este SQL no SQL Editor do seu projeto Supabase externo:
 -- https://supabase.com/dashboard/project/gessdgkkbpsuvykvokqd/sql/new
 -- ============================================================
@@ -9,8 +9,16 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text,
   email text,
+  business_name text,
+  logo_url text,
+  brand_color text not null default '#22c55e',
   created_at timestamptz not null default now()
 );
+
+-- Garantir colunas novas em bases já existentes
+alter table public.profiles add column if not exists business_name text;
+alter table public.profiles add column if not exists logo_url text;
+alter table public.profiles add column if not exists brand_color text not null default '#22c55e';
 
 alter table public.profiles enable row level security;
 
@@ -177,7 +185,7 @@ drop policy if exists "sales_insert_own" on public.sales;
 create policy "sales_insert_own" on public.sales
   for insert to authenticated with check (auth.uid() = user_id);
 
--- 6) Profile para usuário JÁ existente (caso já tenha cadastrado antes do trigger)
+-- 6) Profile para usuário JÁ existente
 insert into public.profiles (id, name, email)
 select
   u.id,
@@ -185,3 +193,29 @@ select
   u.email
 from auth.users u
 on conflict (id) do nothing;
+
+-- 7) STORAGE BUCKET para logos do estabelecimento ------------
+insert into storage.buckets (id, name, public)
+values ('logos', 'logos', true)
+on conflict (id) do nothing;
+
+-- Policies do bucket: cada usuário gerencia somente seus próprios arquivos
+-- (caminho deve começar com {user_id}/...)
+drop policy if exists "logos_public_read" on storage.objects;
+create policy "logos_public_read" on storage.objects
+  for select to public using (bucket_id = 'logos');
+
+drop policy if exists "logos_user_insert" on storage.objects;
+create policy "logos_user_insert" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'logos' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "logos_user_update" on storage.objects;
+create policy "logos_user_update" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'logos' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "logos_user_delete" on storage.objects;
+create policy "logos_user_delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'logos' and auth.uid()::text = (storage.foldername(name))[1]);

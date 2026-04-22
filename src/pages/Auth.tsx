@@ -94,6 +94,11 @@ export default function Auth() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
+          <img
+            src="/icon-192.png"
+            alt="Logo"
+            className="mx-auto mb-4 h-16 w-16 rounded-2xl"
+          />
           <h1 className="text-3xl font-bold tracking-tight text-foreground">FluxoComanda</h1>
           <p className="mt-2 text-sm text-muted-foreground">Gestão de comandas e caixa</p>
         </div>

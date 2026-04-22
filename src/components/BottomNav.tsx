@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, ClipboardList, Package, Wallet } from "lucide-react";
+import { Home, ClipboardList, Package, Wallet, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -7,6 +7,7 @@ const tabs = [
   { to: "/comandas", label: "Comandas", icon: ClipboardList, end: false },
   { to: "/produtos", label: "Produtos", icon: Package, end: false },
   { to: "/caixa", label: "Caixa", icon: Wallet, end: false },
+  { to: "/meu-negocio", label: "Negócio", icon: Store, end: false },
 ];
 
 export const BottomNav = () => {
@@ -20,7 +21,7 @@ export const BottomNav = () => {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-touch flex-col items-center justify-center gap-1 px-2 py-2 text-xs font-medium transition-colors",
+                  "flex min-h-touch flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )
               }

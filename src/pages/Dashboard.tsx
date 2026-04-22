@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InstallBanner } from "@/components/InstallBanner";
 import { useAuth } from "@/hooks/useAuth";
+import { useBusiness } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -20,6 +21,7 @@ interface Metrics {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { business } = useBusiness();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -90,10 +92,21 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Bem-vindo</p>
-          <h1 className="text-2xl font-bold text-foreground">Olá, {name || "..."} 👋</h1>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {business.logo_url && (
+            <img
+              src={business.logo_url}
+              alt={business.business_name ?? "Logo"}
+              className="h-12 w-12 rounded-xl bg-card object-contain"
+            />
+          )}
+          <div>
+            <p className="text-sm text-muted-foreground">Olá, {name || "..."} 👋</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {business.business_name?.trim() || "FluxoComanda"}
+            </h1>
+          </div>
         </div>
         <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" className="min-h-touch min-w-touch">
           <LogOut className="h-5 w-5" />
