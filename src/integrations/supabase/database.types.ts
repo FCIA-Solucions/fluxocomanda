@@ -34,3 +34,6 @@ export interface Database {
     Functions: { [key: string]: never };
     Enums: { [key: string]: never };
     CompositeTypes: { [key: string]: never };
+  };
+}
+
