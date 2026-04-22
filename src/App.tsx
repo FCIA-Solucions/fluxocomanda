@@ -32,7 +32,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
-      </Subscription-fix-not-needed>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
