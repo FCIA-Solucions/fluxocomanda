@@ -16,7 +16,8 @@ export default function Dashboard() {
       .select("name")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then((res) => {
+        const data = res.data as { name: string | null } | null;
         setName(data?.name ?? user.email?.split("@")[0] ?? "");
       });
   }, [user]);
