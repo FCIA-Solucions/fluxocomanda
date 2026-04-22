@@ -133,7 +133,7 @@ export default function Dashboard() {
       <div className="space-y-3">
         <Button
           onClick={() => navigate("/comandas")}
-          className="h-16 w-full bg-success text-success-foreground text-base font-semibold hover:bg-success/90"
+          className="h-16 w-full text-base font-semibold"
         >
           <Plus className="mr-1 h-5 w-5" />
           Nova Comanda
