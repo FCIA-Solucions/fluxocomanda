@@ -114,6 +114,7 @@ export default function Dashboard() {
         </Button>
       </header>
 
+      <SubscriptionBanner />
       <InstallBanner />
 
       <section className="mb-6 grid grid-cols-2 gap-3">
