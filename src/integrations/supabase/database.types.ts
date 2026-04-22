@@ -30,8 +30,7 @@ export interface Database {
         Update: { id?: string; user_id?: string; order_id?: string | null; total?: number; payment_method?: string | null; created_at?: string };
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-  };
-}
+    Views: { [key: string]: never };
+    Functions: { [key: string]: never };
+    Enums: { [key: string]: never };
+    CompositeTypes: { [key: string]: never };
