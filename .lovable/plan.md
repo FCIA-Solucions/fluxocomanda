@@ -1,109 +1,94 @@
 
 
-# FluxoComanda — Fase 1 (execução)
+# Login com Google no `/auth`
 
-Supabase externo via hardcode. URL + publishable key prontos.
+Adicionar OAuth Google mantendo email/senha intacto.
 
-## Credenciais que vou hardcodar
+## 1. `src/hooks/useAuth.tsx`
 
-```text
-URL:  https://gessdgkkbpsuvykvokqd.supabase.co
-KEY:  sb_publishable_6FXZBzUPaO6FZivS5wP7VQ_afGgybN4
+Adicionar `signInWithGoogle` ao contexto:
+
+```ts
+signInWithGoogle: async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${window.location.origin}/dashboard` },
+  });
+  return { error };
+}
 ```
 
-Ambas públicas — seguro no bundle. RLS protege os dados.
+Expor na interface `AuthContextValue` e no `<AuthContext.Provider value={...}>`.
 
-## 1. Cliente Supabase
+## 2. `src/pages/Auth.tsx`
 
-`src/integrations/supabase/client.ts` — cliente com `persistSession: true`, `autoRefreshToken: true`, `storage: localStorage`. Sem `.env`, valores literais.
+**Abaixo** do bloco `<Tabs>` (depois dos formulários de email/senha), adicionar:
 
-`src/integrations/supabase/types.ts` — tipos TS manuais das 5 tabelas (Database interface) pra autocomplete e segurança.
+- **Divisor**: linha horizontal com texto "ou" centralizado (`border-t` + span absoluto com `bg-card px-2`).
+- **Botão Google**: `variant="outline"`, `w-full`, `style={{ height: 56 }}`, ícone Google SVG inline (4 cores oficiais) à esquerda, texto "Continuar com Google".
+- Handler `handleGoogle`: chama `signInWithGoogle()`, mostra toast de erro se falhar. Sucesso = redirect automático do Supabase pro Google → volta em `/dashboard` → `onAuthStateChange` captura sessão.
+- Estado `googleLoading` separado pra mostrar `Loader2` no botão sem afetar o `submitting` dos forms.
 
-## 2. SQL que VOCÊ roda no Supabase (eu entrego pronto)
-
-Vou te dar **um único bloco SQL** pra colar em **SQL Editor → New query → Run**. Conteúdo:
-
-- 5 tabelas: `profiles`, `products`, `orders`, `order_items`, `sales` (tipos exatos do brief)
-- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` em todas
-- Policies SELECT/INSERT/UPDATE/DELETE por tabela:
-  - `profiles`: `id = auth.uid()`
-  - `products` / `orders` / `sales`: `user_id = auth.uid()`
-  - `order_items`: validado via `EXISTS (SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid())`
-- Função `public.handle_new_user()` SECURITY DEFINER, `search_path = public`, que insere em `profiles` usando `NEW.raw_user_meta_data->>'name'` e `NEW.email`
-- Trigger `on_auth_user_created` AFTER INSERT em `auth.users`
-- Índices: `orders(user_id, status)`, `order_items(order_id)`, `sales(user_id, created_at DESC)`, `products(user_id, active)`
-
-## 3. Configuração no Dashboard Supabase (você faz)
-
-- **Authentication → URL Configuration**
-  - Site URL: `https://id-preview--d701e835-8fe1-487b-a7ab-9fc6488ed4fc.lovable.app`
-  - Redirect URLs: a mesma URL + `http://localhost:8080`
-- **Authentication → Providers → Email**: desligar **Confirm email** (dev). Religar antes de produção.
-
-## 4. Design system (dark fixo)
-
-`src/index.css` tokens HSL:
-
+Layout final do card:
 ```text
---background: 222 47% 11%      (#0f172a)
---card:       217 33% 17%      (#1e293b)
---primary:    142 71% 45%      (#22c55e)
---primary-foreground: 210 40% 98%
---destructive: 0 84% 60%       (#ef4444)
---foreground: 210 40% 98%      (#f8fafc)
---muted-foreground: 215 16% 65% (#94a3b8)
---border: 217 33% 22%
---radius: 1rem
+[ Tabs Entrar | Criar conta ]
+[ formulário email/senha     ]
+─────── ou ───────
+[ 🇬 Continuar com Google    ]
 ```
 
-`tailwind.config.ts`: `minHeight.touch = 56px`, fonte Inter. `<html class="dark" lang="pt-BR">` em `index.html` + Google Fonts Inter + theme-color #0f172a + title FluxoComanda.
+## 3. SQL — atualizar trigger `handle_new_user`
 
-## 5. Auth + navegação
+Você precisa rodar isto no **SQL Editor do Supabase** (vou colar o SQL completo no chat depois de gerar o código). O trigger atual só lê `name`; Google manda `full_name`:
 
-```text
-NOVOS
-  src/integrations/supabase/client.ts
-  src/integrations/supabase/types.ts
-  src/hooks/useAuth.tsx          (provider, onAuthStateChange ANTES de getSession)
-  src/components/ProtectedRoute.tsx
-  src/components/BottomNav.tsx   (4 tabs: Home/Comandas/Produtos/Caixa, h-16 fixed)
-  src/components/AppShell.tsx    (wrapper pb-20 + padding lateral)
-  src/pages/Auth.tsx             (tabs Entrar/Criar conta, Zod, inputs h-13, botão h-14)
-  src/pages/Dashboard.tsx        ("Olá, {name}" + botão Sair)
-  src/pages/Comandas.tsx         (placeholder)
-  src/pages/Produtos.tsx         (placeholder)
-  src/pages/Caixa.tsx            (placeholder)
-
-ALTERADOS
-  src/App.tsx       (AuthProvider + rotas + ProtectedRoute envolvendo as protegidas)
-  src/pages/Index.tsx  (Navigate to /dashboard)
-  src/index.css     (tokens)
-  tailwind.config.ts
-  index.html
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name)
+  VALUES (
+    NEW.id,
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      NEW.email
+    )
+  );
+  RETURN NEW;
+END;
+$$;
 ```
 
-Rotas:
+Sem isso, login Google cria profile com nome vazio.
 
-```text
-/auth      público
-/          → /dashboard
-/dashboard /comandas /produtos /caixa  → protegidas
-*          NotFound
-```
+## 4. Configuração externa (você faz fora do código)
 
-Signup envia `options.data = { name }` + `emailRedirectTo: ${window.location.origin}/`. Validação Zod (email, senha ≥6, nome ≥2). Toasts em sucesso/erro.
+**Google Cloud Console** → Credentials → OAuth client (Web):
+- Authorized redirect URI: `https://gessdgkkbpsuvykvokqd.supabase.co/auth/v1/callback`
+- Copiar Client ID + Secret.
+
+**Supabase Dashboard** → Authentication → Providers → Google:
+- Ativar, colar Client ID + Secret.
+
+**Supabase Dashboard** → Authentication → URL Configuration → Redirect URLs:
+- `https://id-preview--d701e835-8fe1-487b-a7ab-9fc6488ed4fc.lovable.app/**`
+- `http://localhost:8080/**`
+
+Sem isso o Google retorna `redirect_uri_mismatch`.
 
 ## Critério de pronto
 
-- Você roda o SQL → tabelas + trigger + RLS criadas.
-- Cadastro pelo app cria linha em `auth.users` E em `profiles` (via trigger).
-- Login persiste após reload.
-- Sem sessão, qualquer rota protegida cai em `/auth`.
-- Bottom nav fixo, todos os botões ≥56px de altura.
+- Botão "Continuar com Google" visível em `/auth`, 56px, com divisor "ou".
+- Clicar → consentimento Google → volta logado em `/dashboard`.
+- `profiles` tem nome preenchido (via trigger atualizado).
+- Erro no OAuth dispara toast destrutivo.
+- Email/senha continua funcionando.
 
 ## Entrega
 
-Após gerar o código, vou colar o **SQL completo** no chat pra você rodar — sem isso, signup falha no trigger.
-
-Próxima fase (não nesta): CRUD de produtos + abertura/edição de comanda.
+Após gerar o código, colo o **SQL do trigger atualizado** no chat e te lembro dos passos do Google Cloud + Supabase Dashboard.
 
