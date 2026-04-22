@@ -1,68 +1,63 @@
 
 
-# Fase 2 — Dashboard funcional + CRUD de Produtos
+## Adicionar branding FCIA ao FluxoComanda
 
-## 1. `src/pages/Dashboard.tsx` (reescrever)
+Adicionar identidade da marca FCIA (empresa) em pontos estratégicos do app, mantendo o FluxoComanda como produto principal.
 
-Carregar 4 métricas em paralelo via `Promise.all`:
-- **Vendas Hoje**: `sales.select('total').gte('created_at', todayISO).eq('user_id', uid)` → soma
-- **Comandas Abertas**: `orders.select('id', { count: 'exact', head: true }).eq('status','open').eq('user_id', uid)`
-- **Comandas Fechadas Hoje**: `orders.select('id', { count: 'exact', head: true }).eq('status','closed').gte('closed_at', todayISO)`
-- **Ticket Médio**: somaVendas / qtdVendas (0 se vazio)
+### 1. Asset da logo FCIA
+Copiar a imagem enviada (`user-uploads://logo.png`) para `src/assets/fcia-logo.png` para uso nos componentes (splash + rodapé do login).
 
-Layout:
-- Header com saudação + botão sair (mantém atual)
-- Grid 2x2 de cards de resumo (`grid-cols-2 gap-3`)
-  - Cada card: label pequeno + valor grande + ícone `lucide`
-  - Skeleton enquanto `loading`
-- Mensagem "Nenhuma venda hoje ainda 🙂" se `vendasHoje === 0` (acima dos botões)
-- Botão verde full-width 64px: "+ Nova Comanda" → `navigate('/comandas')` (rota nova ainda não existe)
-- Botão outline full-width: "Ver Comandas" → `navigate('/comandas')`
+### 2. Splash Screen (novo componente)
+Criar `src/components/SplashScreen.tsx`:
+- Tela cheia, fundo `#0f172a`
+- Centro: ícone do FluxoComanda (`/icon-192.png`) com leve animação (fade+scale)
+- Texto "FluxoComanda" abaixo (bold)
+- Rodapé: "by **FCIA**" (muted, FCIA em destaque verde `#22c55e`)
+- Duração: 2 segundos, depois fade-out suave
 
-Formatação BRL via `Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' })`.
+Integrar em `src/App.tsx`:
+- Estado `showSplash` controlado por `sessionStorage` (mostra apenas 1x por sessão para não atrapalhar navegação interna)
+- Renderizar `<SplashScreen />` por cima das rotas enquanto `showSplash === true`
 
-## 2. `src/pages/Produtos.tsx` (reescrever)
+### 3. Rodapé na tela /auth
+Em `src/pages/Auth.tsx`, abaixo do card branco do formulário (depois de `</div>` do card, antes do fechamento do container):
+```
+Um produto
+[logo FCIA pequena] FCIA       ← bold, verde
+Soluções Inteligentes          ← muted pequeno
+```
+Layout vertical centralizado, espaçamento `mt-8`.
 
-Estado: `products`, `loading`, `sheetOpen`, `editing` (produto sendo editado ou null), `deleteTarget`.
+### 4. Rodapé na tela /assinatura
+Em `src/pages/Assinatura.tsx`, adicionar abaixo do botão "Sair da conta":
+- Texto pequeno muted centralizado: "FluxoComanda é um produto **FCIA** · [fcia.com.br](https://fcia.com.br)"
 
-### Carga
-`supabase.from('products').select('*').eq('user_id', uid).order('created_at', { ascending: false })`.
-Sem filtro de `active` — lista mostra todos com badge.
+### 5. Card "Sobre o app" em /meu-negocio
+Em `src/pages/MeuNegocio.tsx`, adicionar como última seção (após o botão Salvar):
+- Card com fundo `bg-card` arredondado
+- Linha 1: "FluxoComanda **v1.0**"
+- Linha 2: "Desenvolvido por FCIA Soluções Inteligentes"
+- Linha 3: link clicável → https://fciapremium.lovable.app/ (abre em nova aba)
+- Linha 4 (muted, xs): "© 2026 FCIA. Todos os direitos reservados."
 
-### Lista
-- Cards (um por linha): nome (bold) + preço BRL + badge "Ativo"/"Inativo" + Switch + botão lixeira
-- Toque no card (área não-controle) abre sheet em modo edição
-- Estado vazio centralizado: "Nenhum produto cadastrado. Toque em + para adicionar."
+### 6. PWA manifest
+Em `public/manifest.json`, atualizar campo `description`:
+```
+"FluxoComanda — Um produto FCIA. Comanda digital para comércios locais."
+```
 
-### FAB
-Botão fixo `bottom-24 right-4` (acima do BottomNav), `h-14 w-14 rounded-full`, ícone `Plus`, `bg-primary`. Abre sheet em modo criação.
+### Detalhes técnicos
+- Logo FCIA usada apenas no splash (acima do "by FCIA") e como ícone pequeno no rodapé do /auth — em `src/assets/` para bundling otimizado, importada como módulo ES6.
+- A cor verde `#22c55e` no destaque "FCIA" é fixa (identidade da marca FCIA), independente da `brand_color` que o usuário escolher em Meu Negócio.
+- Splash usa `sessionStorage` (não `localStorage`) para reaparecer a cada nova sessão do navegador, mas não em cada navegação.
+- Sem alterações no banco de dados.
 
-### Sheet (`side="bottom"`)
-- Título: "Novo produto" / "Editar produto"
-- Inputs: Nome (obrigatório), Preço (máscara BRL — guarda centavos como number, formata na exibição)
-- Implementação da máscara: input controlado, parse `onChange` removendo não-dígitos, divide por 100, formata com `Intl`. Salva como `number` (reais, ex. 12.50).
-- Botão Salvar `h-14` full-width
-
-### Mutations
-- Create: `insert({ user_id, name, price, active: true })`
-- Update: `update({ name, price }).eq('id', editing.id)`
-- Toggle ativo: `update({ active: !p.active }).eq('id', p.id)` direto no card
-- Soft delete: AlertDialog "Desativar produto?" → `update({ active: false })`
-
-Toasts (sonner) em cada operação. Refetch da lista após cada mutation (ou update otimista no array local).
-
-## 3. Sem mudanças em schema/SQL
-
-Tabelas `products`, `orders`, `sales` já existem com os campos necessários (visto em `database.types.ts`). RLS já aplica filtro por `user_id`.
-
-## 4. Componentes shadcn usados
-Já instalados: `sheet`, `alert-dialog`, `switch`, `badge`, `skeleton`, `card`, `button`, `input`, `label`. Não preciso adicionar nada.
-
-## Critério de pronto
-- Dashboard mostra 4 métricas reais; skeleton durante load; mensagem de vazio quando zero vendas.
-- "+ Nova Comanda" e "Ver Comandas" navegam para `/comandas`.
-- Lista de produtos popula do banco, vazio mostra mensagem.
-- FAB abre sheet inferior; criar/editar/toggle/desativar funcionam com toast.
-- Máscara BRL no input de preço.
-- Tudo via Supabase, zero mock.
+### Arquivos afetados
+- `src/assets/fcia-logo.png` (novo, copiado do upload)
+- `src/components/SplashScreen.tsx` (novo)
+- `src/App.tsx` (integrar splash)
+- `src/pages/Auth.tsx` (rodapé FCIA)
+- `src/pages/Assinatura.tsx` (rodapé FCIA)
+- `src/pages/MeuNegocio.tsx` (card "Sobre o app")
+- `public/manifest.json` (description)
 
