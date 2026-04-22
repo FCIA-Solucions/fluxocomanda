@@ -9,6 +9,8 @@ import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Comandas from "./pages/Comandas.tsx";
+import NovaComanda from "./pages/NovaComanda.tsx";
+import ComandaDetalhe from "./pages/ComandaDetalhe.tsx";
 import Produtos from "./pages/Produtos.tsx";
 import Caixa from "./pages/Caixa.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/comandas" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
+            <Route path="/comandas/nova" element={<ProtectedRoute><NovaComanda /></ProtectedRoute>} />
+            <Route path="/comandas/:id" element={<ProtectedRoute><ComandaDetalhe /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
