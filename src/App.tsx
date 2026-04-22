@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { BusinessProvider } from "@/hooks/useBusiness";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -13,6 +14,7 @@ import NovaComanda from "./pages/NovaComanda.tsx";
 import ComandaDetalhe from "./pages/ComandaDetalhe.tsx";
 import Produtos from "./pages/Produtos.tsx";
 import Caixa from "./pages/Caixa.tsx";
+import MeuNegocio from "./pages/MeuNegocio.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -24,17 +26,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/comandas" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
-            <Route path="/comandas/nova" element={<ProtectedRoute><NovaComanda /></ProtectedRoute>} />
-            <Route path="/comandas/:id" element={<ProtectedRoute><ComandaDetalhe /></ProtectedRoute>} />
-            <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
-            <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <BusinessProvider>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/comandas" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
+              <Route path="/comandas/nova" element={<ProtectedRoute><NovaComanda /></ProtectedRoute>} />
+              <Route path="/comandas/:id" element={<ProtectedRoute><ComandaDetalhe /></ProtectedRoute>} />
+              <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+              <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
+              <Route path="/meu-negocio" element={<ProtectedRoute><MeuNegocio /></ProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BusinessProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
