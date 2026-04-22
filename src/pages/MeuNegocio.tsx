@@ -206,6 +206,30 @@ export default function MeuNegocio() {
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar"}
           </Button>
+
+          {/* Sobre o app */}
+          <section className="space-y-2 rounded-2xl bg-card p-4 text-center">
+            <p className="text-sm font-semibold text-foreground">
+              FluxoComanda <span className="text-muted-foreground">v1.0</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Desenvolvido por{" "}
+              <span className="font-semibold" style={{ color: "#22c55e" }}>FCIA</span>{" "}
+              Soluções Inteligentes
+            </p>
+            <a
+              href="https://fciapremium.lovable.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-sm underline hover:text-foreground"
+              style={{ color: "#22c55e" }}
+            >
+              fciapremium.lovable.app
+            </a>
+            <p className="text-xs text-muted-foreground">
+              © 2026 FCIA. Todos os direitos reservados.
+            </p>
+          </section>
         </div>
       )}
     </AppShell>

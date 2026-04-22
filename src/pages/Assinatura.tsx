@@ -119,6 +119,19 @@ export default function Assinatura() {
         >
           Sair da conta
         </Button>
+
+        <p className="mt-8 text-center text-xs text-muted-foreground">
+          FluxoComanda é um produto{" "}
+          <span className="font-semibold" style={{ color: "#22c55e" }}>FCIA</span> ·{" "}
+          <a
+            href="https://fcia.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-foreground"
+          >
+            fcia.com.br
+          </a>
+        </p>
       </div>
     </div>
   );

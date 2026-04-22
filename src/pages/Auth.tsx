@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import fciaLogo from "@/assets/fcia-logo.png";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255),
@@ -228,6 +229,15 @@ export default function Auth() {
               </>
             )}
           </Button>
+        </div>
+
+        <div className="mt-8 flex flex-col items-center gap-1 text-center">
+          <p className="text-xs text-muted-foreground">Um produto</p>
+          <div className="flex items-center gap-2">
+            <img src={fciaLogo} alt="FCIA" className="h-8 w-8 rounded-md object-contain" />
+            <span className="text-xl font-bold" style={{ color: "#22c55e" }}>FCIA</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Soluções Inteligentes</p>
         </div>
       </div>
     </div>
