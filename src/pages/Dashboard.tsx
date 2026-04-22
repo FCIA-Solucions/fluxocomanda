@@ -4,6 +4,7 @@ import { LogOut, DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InstallBanner } from "@/components/InstallBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -98,6 +99,8 @@ export default function Dashboard() {
           <LogOut className="h-5 w-5" />
         </Button>
       </header>
+
+      <InstallBanner />
 
       <section className="mb-6 grid grid-cols-2 gap-3">
         <MetricCard
