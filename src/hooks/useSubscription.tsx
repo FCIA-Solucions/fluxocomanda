@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ADMIN_EMAIL } from "@/lib/subscriptionConfig";
 
 export type SubscriptionStatus = "trial" | "active" | "expired";
 
@@ -12,6 +13,8 @@ export interface SubscriptionState {
   daysLeft: number;
   /** Qual data está sendo considerada para daysLeft: 'trial' ou 'active'. */
   source: "trial" | "active" | "none";
+  /** True quando o acesso ao app deve ser bloqueado (status = 'expired' e não é admin). */
+  isBlocked: boolean;
   loading: boolean;
 }
 
@@ -25,6 +28,7 @@ const defaultState: SubscriptionState = {
   subscriptionExpiresAt: null,
   daysLeft: 0,
   source: "none",
+  isBlocked: false,
   loading: true,
 };
 
@@ -32,8 +36,14 @@ const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(
 
 function computeStatus(
   trialEndsAt: Date | null,
-  subscriptionExpiresAt: Date | null
+  subscriptionExpiresAt: Date | null,
+  hasAnyField: boolean
 ): { status: SubscriptionStatus; daysLeft: number; source: "trial" | "active" | "none" } {
+  // Usuário novo (todos os campos vazios) → trial livre
+  if (!hasAnyField) {
+    return { status: "trial", daysLeft: 3, source: "trial" };
+  }
+
   const now = Date.now();
   const trialMs = trialEndsAt ? trialEndsAt.getTime() - now : -1;
   const subMs = subscriptionExpiresAt ? subscriptionExpiresAt.getTime() - now : -1;
@@ -66,7 +76,13 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
     const trialEndsAt = data?.trial_ends_at ? new Date(data.trial_ends_at) : null;
     const subExpires = data?.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
-    const computed = computeStatus(trialEndsAt, subExpires);
+    const hasAnyField = !!(data?.subscription_status || trialEndsAt || subExpires);
+    const computed = computeStatus(trialEndsAt, subExpires, hasAnyField);
+
+    // Bypass para o dono / admin definido em VITE_ADMIN_EMAIL
+    const isAdmin =
+      !!ADMIN_EMAIL && !!user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const isBlocked = !isAdmin && computed.status === "expired";
 
     setState({
       status: computed.status,
@@ -74,6 +90,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
       source: computed.source,
       trialEndsAt,
       subscriptionExpiresAt: subExpires,
+      isBlocked,
       loading: false,
     });
   }, [user]);
