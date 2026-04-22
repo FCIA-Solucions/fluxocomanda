@@ -1,7 +1,7 @@
 {
   "name": "FluxoComanda",
   "short_name": "FluxoComanda",
-  "description": "Comanda digital para comércios locais",
+  "description": "FluxoComanda — Um produto FCIA. Comanda digital para comércios locais.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

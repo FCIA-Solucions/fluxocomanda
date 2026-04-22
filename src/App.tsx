@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { SplashScreen } from "@/components/SplashScreen";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -22,9 +24,23 @@ import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const SPLASH_KEY = "fc_splash_shown";
+
+const App = () => {
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(SPLASH_KEY) !== "1";
+  });
+
+  const handleSplashDone = () => {
+    sessionStorage.setItem(SPLASH_KEY, "1");
+    setShowSplash(false);
+  };
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -50,6 +66,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
