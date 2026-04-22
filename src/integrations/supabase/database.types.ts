@@ -5,9 +5,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; name: string | null; email: string | null; created_at: string };
-        Insert: { id: string; name?: string | null; email?: string | null; created_at?: string };
-        Update: { id?: string; name?: string | null; email?: string | null; created_at?: string };
+        Row: { id: string; name: string | null; email: string | null; business_name: string | null; logo_url: string | null; brand_color: string; created_at: string };
+        Insert: { id: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; created_at?: string };
+        Update: { id?: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; created_at?: string };
         Relationships: [];
       };
       products: {
