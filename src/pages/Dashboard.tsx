@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InstallBanner } from "@/components/InstallBanner";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +114,7 @@ export default function Dashboard() {
         </Button>
       </header>
 
+      <SubscriptionBanner />
       <InstallBanner />
 
       <section className="mb-6 grid grid-cols-2 gap-3">
