@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
+import { DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +21,7 @@ interface Metrics {
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { business } = useBusiness();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
