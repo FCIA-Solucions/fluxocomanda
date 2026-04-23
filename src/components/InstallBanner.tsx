@@ -130,13 +130,15 @@ export function InstallBanner({ forceShow = false, hideDismiss = false }: Instal
           <Download className="mr-1 h-4 w-4" />
           Instalar
         </Button>
-        <button
-          onClick={dismiss}
-          aria-label="Dispensar"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {!hideDismiss && (
+          <button
+            onClick={dismiss}
+            aria-label="Dispensar"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {showHelpModal && mode === "ios" && (
