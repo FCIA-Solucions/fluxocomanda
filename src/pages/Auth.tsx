@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import fciaLogo from "@/assets/fcia-logo.png";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255),
@@ -28,6 +29,7 @@ export default function Auth() {
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   // signin form state
   const [email, setEmail] = useState("");
@@ -144,6 +146,15 @@ export default function Auth() {
                 <Button type="submit" disabled={submitting} className="w-full text-base font-semibold" style={{ height: 56 }}>
                   {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Entrar"}
                 </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setForgotOpen(true)}
+                    className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
               </form>
             </TabsContent>
 
@@ -240,6 +251,12 @@ export default function Auth() {
           <p className="text-xs text-muted-foreground">Soluções Inteligentes</p>
         </div>
       </div>
+
+      <ForgotPasswordDialog
+        open={forgotOpen}
+        onOpenChange={setForgotOpen}
+        defaultEmail={email}
+      />
     </div>
   );
 }
