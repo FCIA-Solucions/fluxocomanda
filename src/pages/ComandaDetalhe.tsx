@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
@@ -14,7 +15,22 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useBusiness } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
+
+function maskPhoneBR(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 3) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+const paymentLabel: Record<string, string> = {
+  dinheiro: "Dinheiro",
+  pix: "PIX",
+  cartao: "Cartão",
+};
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -58,6 +74,17 @@ export default function ComandaDetalhe() {
   const [closeOpen, setCloseOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<"payment" | "share">("payment");
+  const [phone, setPhone] = useState("");
+  const [closedSnapshot, setClosedSnapshot] = useState<{
+    items: OrderItem[];
+    total: number;
+    payment: PaymentMethod;
+    closedAt: Date;
+    customerName: string | null;
+  } | null>(null);
+
+  const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
 
@@ -200,6 +227,8 @@ export default function ComandaDetalhe() {
       return;
     }
     setPayment(null);
+    setStep("payment");
+    setPhone("");
     setCloseOpen(true);
   };
 
@@ -209,19 +238,20 @@ export default function ComandaDetalhe() {
       searchParams.delete("fechar");
       setSearchParams(searchParams, { replace: true });
     }
+    if (!open && closedSnapshot) {
+      // Após fechar o modal pós-venda, voltar ao dashboard
+      navigate("/dashboard", { replace: true });
+    }
   };
 
   const confirmPayment = async () => {
     if (!order || !user || !payment) return;
     setConfirming(true);
 
-    // Fechamento ATÔMICO via RPC: calcula total, registra venda e
-    // fecha a comanda em uma única transação. Em caso de erro,
-    // o Postgres faz rollback automático de tudo.
     const { data, error } = await (supabase.rpc as unknown as (
       fn: string,
       args: Record<string, unknown>
-    ) => Promise<{ data: { total?: number } | null; error: { message: string } | null }>)(
+    ) => Promise<{ data: { total?: number; closed_at?: string } | null; error: { message: string } | null }>)(
       "fechar_comanda",
       { p_order_id: order.id, p_payment_method: payment }
     );
@@ -233,8 +263,70 @@ export default function ComandaDetalhe() {
       return;
     }
 
-    const finalTotal = data?.total ?? total;
-    toast.success(`✅ Venda de ${brl.format(Number(finalTotal))} registrada!`);
+    const finalTotal = Number(data?.total ?? total);
+    toast.success(`✅ Venda de ${brl.format(finalTotal)} registrada!`);
+
+    setClosedSnapshot({
+      items: [...items],
+      total: finalTotal,
+      payment,
+      closedAt: data?.closed_at ? new Date(data.closed_at) : new Date(),
+      customerName: order.customer_name,
+    });
+    setStep("share");
+  };
+
+  const buildWhatsAppMessage = () => {
+    if (!closedSnapshot) return "";
+    const { items: snapItems, total: snapTotal, payment: snapPayment, closedAt, customerName } = closedSnapshot;
+    const businessName = business.business_name || "Estabelecimento";
+    const dateStr = closedAt.toLocaleDateString("pt-BR");
+    const timeStr = closedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    const itemsLines = snapItems
+      .map((i) => `• ${i.product_name} x${i.quantity} — ${brl.format(Number(i.subtotal))}`)
+      .join("\n");
+
+    const greeting = customerName ? `Olá, ${customerName}! 👋` : "Olá! 👋";
+
+    return [
+      `*${businessName}*`,
+      `Resumo do seu pedido`,
+      `${dateStr} às ${timeStr}`,
+      ``,
+      greeting,
+      ``,
+      `*Itens:*`,
+      itemsLines,
+      ``,
+      `*Forma de pagamento:* ${paymentLabel[snapPayment]}`,
+      `*Total:* ${brl.format(snapTotal)}`,
+      ``,
+      `Obrigado pela preferência! 😊`,
+      `Volte sempre!`,
+      ``,
+      `_by FluxoComanda · FCIA Soluções em Tecnologia_`,
+    ].join("\n");
+  };
+
+  const sendWhatsApp = () => {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      toast.error("Informe um WhatsApp válido");
+      return;
+    }
+    const fullNumber = digits.startsWith("55") ? digits : `55${digits}`;
+    const message = buildWhatsAppMessage();
+    const url = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setCloseOpen(false);
+    setClosedSnapshot(null);
+    navigate("/dashboard", { replace: true });
+  };
+
+  const closeWithoutSending = () => {
+    setCloseOpen(false);
+    setClosedSnapshot(null);
     navigate("/dashboard", { replace: true });
   };
 
@@ -392,57 +484,103 @@ export default function ComandaDetalhe() {
       {/* Sheet de fechamento */}
       <Sheet open={closeOpen} onOpenChange={closeSheetAndCleanUrl}>
         <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader>
-            <SheetTitle>Fechar comanda</SheetTitle>
-          </SheetHeader>
+          {step === "payment" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Fechar comanda</SheetTitle>
+              </SheetHeader>
 
-          <div className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-xl bg-muted/40 p-3">
-            {items.map((i) => (
-              <div key={i.id} className="flex items-center justify-between text-sm">
-                <span className="truncate pr-2">
-                  {i.quantity}× {i.product_name}
-                </span>
-                <span className="tabular-nums text-muted-foreground">{brl.format(Number(i.subtotal))}</span>
+              <div className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-xl bg-muted/40 p-3">
+                {items.map((i) => (
+                  <div key={i.id} className="flex items-center justify-between text-sm">
+                    <span className="truncate pr-2">
+                      {i.quantity}× {i.product_name}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">{brl.format(Number(i.subtotal))}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="mt-4 flex items-baseline justify-between">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-3xl font-bold text-primary">{brl.format(total)}</span>
-          </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-3xl font-bold text-primary">{brl.format(total)}</span>
+              </div>
 
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-semibold text-foreground">Forma de pagamento</p>
-            <div className="grid grid-cols-3 gap-2">
-              <PayBtn
-                active={payment === "dinheiro"}
-                onClick={() => setPayment("dinheiro")}
-                icon={<Banknote className="h-5 w-5" />}
-                label="Dinheiro"
-              />
-              <PayBtn
-                active={payment === "pix"}
-                onClick={() => setPayment("pix")}
-                icon={<Smartphone className="h-5 w-5" />}
-                label="PIX"
-              />
-              <PayBtn
-                active={payment === "cartao"}
-                onClick={() => setPayment("cartao")}
-                icon={<CreditCard className="h-5 w-5" />}
-                label="Cartão"
-              />
-            </div>
-          </div>
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-semibold text-foreground">Forma de pagamento</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <PayBtn
+                    active={payment === "dinheiro"}
+                    onClick={() => setPayment("dinheiro")}
+                    icon={<Banknote className="h-5 w-5" />}
+                    label="Dinheiro"
+                  />
+                  <PayBtn
+                    active={payment === "pix"}
+                    onClick={() => setPayment("pix")}
+                    icon={<Smartphone className="h-5 w-5" />}
+                    label="PIX"
+                  />
+                  <PayBtn
+                    active={payment === "cartao"}
+                    onClick={() => setPayment("cartao")}
+                    icon={<CreditCard className="h-5 w-5" />}
+                    label="Cartão"
+                  />
+                </div>
+              </div>
 
-          <Button
-            onClick={confirmPayment}
-            disabled={!payment || confirming}
-            className="mt-4 h-16 w-full text-base font-semibold"
-          >
-            {confirming ? "Processando..." : "Confirmar Pagamento"}
-          </Button>
+              <Button
+                onClick={confirmPayment}
+                disabled={!payment || confirming}
+                className="mt-4 h-16 w-full text-base font-semibold"
+              >
+                {confirming ? "Processando..." : "Confirmar Pagamento"}
+              </Button>
+            </>
+          )}
+
+          {step === "share" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Deseja enviar o resumo para o cliente?</SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-2">
+                <label htmlFor="wa-phone" className="text-sm font-medium text-foreground">
+                  WhatsApp do cliente (opcional)
+                </label>
+                <Input
+                  id="wa-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="(XX) 9 XXXX-XXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(maskPhoneBR(e.target.value))}
+                  maxLength={16}
+                />
+              </div>
+
+              <div className="mt-6 grid gap-2">
+                <Button
+                  onClick={sendWhatsApp}
+                  className="h-14 w-full text-base font-semibold"
+                  disabled={phone.replace(/\D/g, "").length < 10}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Enviar via WhatsApp
+                </Button>
+                <Button
+                  onClick={closeWithoutSending}
+                  variant="outline"
+                  className="h-12 w-full text-base font-medium"
+                >
+                  Fechar sem enviar
+                </Button>
+              </div>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </AppShell>
