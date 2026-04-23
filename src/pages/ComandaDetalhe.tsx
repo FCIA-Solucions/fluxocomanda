@@ -227,6 +227,8 @@ export default function ComandaDetalhe() {
       return;
     }
     setPayment(null);
+    setStep("payment");
+    setPhone("");
     setCloseOpen(true);
   };
 
@@ -236,19 +238,20 @@ export default function ComandaDetalhe() {
       searchParams.delete("fechar");
       setSearchParams(searchParams, { replace: true });
     }
+    if (!open && closedSnapshot) {
+      // Após fechar o modal pós-venda, voltar ao dashboard
+      navigate("/dashboard", { replace: true });
+    }
   };
 
   const confirmPayment = async () => {
     if (!order || !user || !payment) return;
     setConfirming(true);
 
-    // Fechamento ATÔMICO via RPC: calcula total, registra venda e
-    // fecha a comanda em uma única transação. Em caso de erro,
-    // o Postgres faz rollback automático de tudo.
     const { data, error } = await (supabase.rpc as unknown as (
       fn: string,
       args: Record<string, unknown>
-    ) => Promise<{ data: { total?: number } | null; error: { message: string } | null }>)(
+    ) => Promise<{ data: { total?: number; closed_at?: string } | null; error: { message: string } | null }>)(
       "fechar_comanda",
       { p_order_id: order.id, p_payment_method: payment }
     );
@@ -260,8 +263,70 @@ export default function ComandaDetalhe() {
       return;
     }
 
-    const finalTotal = data?.total ?? total;
-    toast.success(`✅ Venda de ${brl.format(Number(finalTotal))} registrada!`);
+    const finalTotal = Number(data?.total ?? total);
+    toast.success(`✅ Venda de ${brl.format(finalTotal)} registrada!`);
+
+    setClosedSnapshot({
+      items: [...items],
+      total: finalTotal,
+      payment,
+      closedAt: data?.closed_at ? new Date(data.closed_at) : new Date(),
+      customerName: order.customer_name,
+    });
+    setStep("share");
+  };
+
+  const buildWhatsAppMessage = () => {
+    if (!closedSnapshot) return "";
+    const { items: snapItems, total: snapTotal, payment: snapPayment, closedAt, customerName } = closedSnapshot;
+    const businessName = business.business_name || "Estabelecimento";
+    const dateStr = closedAt.toLocaleDateString("pt-BR");
+    const timeStr = closedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    const itemsLines = snapItems
+      .map((i) => `• ${i.product_name} x${i.quantity} — ${brl.format(Number(i.subtotal))}`)
+      .join("\n");
+
+    const greeting = customerName ? `Olá, ${customerName}! 👋` : "Olá! 👋";
+
+    return [
+      `*${businessName}*`,
+      `Resumo do seu pedido`,
+      `${dateStr} às ${timeStr}`,
+      ``,
+      greeting,
+      ``,
+      `*Itens:*`,
+      itemsLines,
+      ``,
+      `*Forma de pagamento:* ${paymentLabel[snapPayment]}`,
+      `*Total:* ${brl.format(snapTotal)}`,
+      ``,
+      `Obrigado pela preferência! 😊`,
+      `Volte sempre!`,
+      ``,
+      `_by FluxoComanda · FCIA Soluções em Tecnologia_`,
+    ].join("\n");
+  };
+
+  const sendWhatsApp = () => {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      toast.error("Informe um WhatsApp válido");
+      return;
+    }
+    const fullNumber = digits.startsWith("55") ? digits : `55${digits}`;
+    const message = buildWhatsAppMessage();
+    const url = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setCloseOpen(false);
+    setClosedSnapshot(null);
+    navigate("/dashboard", { replace: true });
+  };
+
+  const closeWithoutSending = () => {
+    setCloseOpen(false);
+    setClosedSnapshot(null);
     navigate("/dashboard", { replace: true });
   };
 
