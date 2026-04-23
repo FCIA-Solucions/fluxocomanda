@@ -24,8 +24,6 @@ export default function MeuNegocio() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     setBusinessName(business.business_name ?? "");
