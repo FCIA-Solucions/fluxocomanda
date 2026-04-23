@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Banknote, Smartphone, CreditCard, DollarSign, Lock, CheckCircle2 } from "lucide-react";
+import { Banknote, Smartphone, CreditCard, DollarSign, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
