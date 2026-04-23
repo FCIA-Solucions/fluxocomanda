@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
+import { DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +21,7 @@ interface Metrics {
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { business } = useBusiness();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-start justify-between gap-3">
+      <header className="mb-6 flex items-start gap-3 pr-12">
         <div className="flex items-center gap-3">
           {business.logo_url && (
             <img
@@ -114,9 +114,6 @@ export default function Dashboard() {
             </h1>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" className="min-h-touch min-w-touch">
-          <LogOut className="h-5 w-5" />
-        </Button>
       </header>
 
       <SubscriptionBanner />
