@@ -484,57 +484,103 @@ export default function ComandaDetalhe() {
       {/* Sheet de fechamento */}
       <Sheet open={closeOpen} onOpenChange={closeSheetAndCleanUrl}>
         <SheetContent side="bottom" className="rounded-t-2xl">
-          <SheetHeader>
-            <SheetTitle>Fechar comanda</SheetTitle>
-          </SheetHeader>
+          {step === "payment" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Fechar comanda</SheetTitle>
+              </SheetHeader>
 
-          <div className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-xl bg-muted/40 p-3">
-            {items.map((i) => (
-              <div key={i.id} className="flex items-center justify-between text-sm">
-                <span className="truncate pr-2">
-                  {i.quantity}× {i.product_name}
-                </span>
-                <span className="tabular-nums text-muted-foreground">{brl.format(Number(i.subtotal))}</span>
+              <div className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-xl bg-muted/40 p-3">
+                {items.map((i) => (
+                  <div key={i.id} className="flex items-center justify-between text-sm">
+                    <span className="truncate pr-2">
+                      {i.quantity}× {i.product_name}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">{brl.format(Number(i.subtotal))}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="mt-4 flex items-baseline justify-between">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-3xl font-bold text-primary">{brl.format(total)}</span>
-          </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-3xl font-bold text-primary">{brl.format(total)}</span>
+              </div>
 
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-semibold text-foreground">Forma de pagamento</p>
-            <div className="grid grid-cols-3 gap-2">
-              <PayBtn
-                active={payment === "dinheiro"}
-                onClick={() => setPayment("dinheiro")}
-                icon={<Banknote className="h-5 w-5" />}
-                label="Dinheiro"
-              />
-              <PayBtn
-                active={payment === "pix"}
-                onClick={() => setPayment("pix")}
-                icon={<Smartphone className="h-5 w-5" />}
-                label="PIX"
-              />
-              <PayBtn
-                active={payment === "cartao"}
-                onClick={() => setPayment("cartao")}
-                icon={<CreditCard className="h-5 w-5" />}
-                label="Cartão"
-              />
-            </div>
-          </div>
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-semibold text-foreground">Forma de pagamento</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <PayBtn
+                    active={payment === "dinheiro"}
+                    onClick={() => setPayment("dinheiro")}
+                    icon={<Banknote className="h-5 w-5" />}
+                    label="Dinheiro"
+                  />
+                  <PayBtn
+                    active={payment === "pix"}
+                    onClick={() => setPayment("pix")}
+                    icon={<Smartphone className="h-5 w-5" />}
+                    label="PIX"
+                  />
+                  <PayBtn
+                    active={payment === "cartao"}
+                    onClick={() => setPayment("cartao")}
+                    icon={<CreditCard className="h-5 w-5" />}
+                    label="Cartão"
+                  />
+                </div>
+              </div>
 
-          <Button
-            onClick={confirmPayment}
-            disabled={!payment || confirming}
-            className="mt-4 h-16 w-full text-base font-semibold"
-          >
-            {confirming ? "Processando..." : "Confirmar Pagamento"}
-          </Button>
+              <Button
+                onClick={confirmPayment}
+                disabled={!payment || confirming}
+                className="mt-4 h-16 w-full text-base font-semibold"
+              >
+                {confirming ? "Processando..." : "Confirmar Pagamento"}
+              </Button>
+            </>
+          )}
+
+          {step === "share" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Deseja enviar o resumo para o cliente?</SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-2">
+                <label htmlFor="wa-phone" className="text-sm font-medium text-foreground">
+                  WhatsApp do cliente (opcional)
+                </label>
+                <Input
+                  id="wa-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="(XX) 9 XXXX-XXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(maskPhoneBR(e.target.value))}
+                  maxLength={16}
+                />
+              </div>
+
+              <div className="mt-6 grid gap-2">
+                <Button
+                  onClick={sendWhatsApp}
+                  className="h-14 w-full text-base font-semibold"
+                  disabled={phone.replace(/\D/g, "").length < 10}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Enviar via WhatsApp
+                </Button>
+                <Button
+                  onClick={closeWithoutSending}
+                  variant="outline"
+                  className="h-12 w-full text-base font-medium"
+                >
+                  Fechar sem enviar
+                </Button>
+              </div>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </AppShell>
