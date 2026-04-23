@@ -74,6 +74,17 @@ export default function ComandaDetalhe() {
   const [closeOpen, setCloseOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<"payment" | "share">("payment");
+  const [phone, setPhone] = useState("");
+  const [closedSnapshot, setClosedSnapshot] = useState<{
+    items: OrderItem[];
+    total: number;
+    payment: PaymentMethod;
+    closedAt: Date;
+    customerName: string | null;
+  } | null>(null);
+
+  const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
 
