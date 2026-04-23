@@ -36,7 +36,7 @@ export default function Comandas() {
   const [openOrders, setOpenOrders] = useState<Order[]>([]);
   const [closedOrders, setClosedOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [closingId, setClosingId] = useState<string | null>(null);
+  
 
   const load = useCallback(async () => {
     if (!user) return;
