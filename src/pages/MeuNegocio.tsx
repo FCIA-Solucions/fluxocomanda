@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,15 +9,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
+import { useProfile } from "@/hooks/useProfile";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { BRAND_COLORS, DEFAULT_BRAND_COLOR } from "@/lib/colorUtils";
 import { cn } from "@/lib/utils";
 
 export default function MeuNegocio() {
   const { user } = useAuth();
+  const { role } = useProfile();
+  const { status } = useSubscription();
   const navigate = useNavigate();
   const { business, loading, refresh, setLocal } = useBusiness();
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const isAdmin = role === "admin";
+  const hasPaidPlan = status === "active";
 
   const [businessName, setBusinessName] = useState("");
   const [brandColor, setBrandColor] = useState<string>(DEFAULT_BRAND_COLOR);
@@ -224,6 +231,78 @@ export default function MeuNegocio() {
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
+
+          {/* Equipe (gerenciar garçons) — somente admin */}
+          {isAdmin && (
+            <section className="space-y-3 rounded-2xl bg-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">Equipe</p>
+                  <p className="text-xs text-muted-foreground">
+                    Cadastre garçons que só veem comandas
+                  </p>
+                </div>
+              </div>
+
+              {hasPaidPlan ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    toast.info("Em breve: gerenciar garçons direto pelo app")
+                  }
+                >
+                  Gerenciar garçons
+                </Button>
+              ) : (
+                <div className="space-y-2 rounded-xl border border-dashed border-border bg-background/40 p-3 text-center">
+                  <Lock className="mx-auto h-5 w-5 text-muted-foreground" />
+                  <p className="text-sm text-foreground">
+                    Gerenciar garçons está disponível a partir do plano Padrão.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate("/assinatura")}
+                  >
+                    Fazer upgrade →
+                  </Button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Modo Demonstração — só para admin */}
+          {isAdmin && (
+            <section className="space-y-2 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <p className="text-sm font-semibold text-foreground">
+                  Modo Demonstração
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Garçom demo disponível para você testar o fluxo limitado.
+              </p>
+              <div className="rounded-lg bg-card p-3 text-sm">
+                <p className="text-muted-foreground">
+                  Email:{" "}
+                  <span className="font-mono text-foreground">
+                    garcom.demo@fluxocomanda.app
+                  </span>
+                </p>
+                <p className="text-muted-foreground">
+                  Senha: <span className="font-mono text-foreground">Demo@2026</span>
+                </p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Disponível nos planos Padrão, Profissional e Ilimitado.
+              </p>
+            </section>
+          )}
 
           {/* Sobre o app */}
           <section className="space-y-2 rounded-2xl bg-card p-4 text-center">

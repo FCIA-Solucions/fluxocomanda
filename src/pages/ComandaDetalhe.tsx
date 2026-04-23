@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 function maskPhoneBR(value: string) {
@@ -63,6 +64,8 @@ type PaymentMethod = "dinheiro" | "pix" | "cartao";
 export default function ComandaDetalhe() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { effectiveUserId, role } = useProfile();
+  const isGarcom = role === "garcom";
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -94,14 +97,14 @@ export default function ComandaDetalhe() {
   );
 
   const load = useCallback(async () => {
-    if (!user || !id) return;
+    if (!user || !id || !effectiveUserId) return;
     setLoading(true);
     const [orderRes, itemsRes, productsRes] = await Promise.all([
       supabase
         .from("orders")
         .select("id, user_id, customer_name, status, total, payment_method")
         .eq("id", id)
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .maybeSingle(),
       supabase
         .from("order_items")
@@ -111,7 +114,7 @@ export default function ComandaDetalhe() {
       supabase
         .from("products")
         .select("id, name, price")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .eq("active", true)
         .order("name", { ascending: true }),
     ]);
@@ -124,7 +127,7 @@ export default function ComandaDetalhe() {
     setItems((itemsRes.data ?? []) as OrderItem[]);
     setProducts((productsRes.data ?? []) as Product[]);
     setLoading(false);
-  }, [user, id, navigate]);
+  }, [user, id, navigate, effectiveUserId]);
 
   useEffect(() => {
     load();
@@ -232,6 +235,8 @@ export default function ComandaDetalhe() {
     setCloseOpen(true);
   };
 
+  const postSaleRedirect = isGarcom ? "/comandas" : "/dashboard";
+
   const closeSheetAndCleanUrl = (open: boolean) => {
     setCloseOpen(open);
     if (!open && searchParams.get("fechar")) {
@@ -239,8 +244,8 @@ export default function ComandaDetalhe() {
       setSearchParams(searchParams, { replace: true });
     }
     if (!open && closedSnapshot) {
-      // Após fechar o modal pós-venda, voltar ao dashboard
-      navigate("/dashboard", { replace: true });
+      // Após fechar o modal pós-venda, voltar à tela inicial conforme role
+      navigate(postSaleRedirect, { replace: true });
     }
   };
 
@@ -321,13 +326,13 @@ export default function ComandaDetalhe() {
     window.open(url, "_blank", "noopener,noreferrer");
     setCloseOpen(false);
     setClosedSnapshot(null);
-    navigate("/dashboard", { replace: true });
+    navigate(postSaleRedirect, { replace: true });
   };
 
   const closeWithoutSending = () => {
     setCloseOpen(false);
     setClosedSnapshot(null);
-    navigate("/dashboard", { replace: true });
+    navigate(postSaleRedirect, { replace: true });
   };
 
   if (loading) {
@@ -409,15 +414,17 @@ export default function ComandaDetalhe() {
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
-                        aria-label="Remover"
-                        onClick={() => removeItem(i)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isGarcom && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
+                          aria-label="Remover"
+                          onClick={() => removeItem(i)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </>
                   )}
                   {isClosed && (
