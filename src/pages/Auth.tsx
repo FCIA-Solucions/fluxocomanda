@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import fciaLogo from "@/assets/fcia-logo.png";
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
+import { InstallBanner } from "@/components/InstallBanner";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255),
@@ -98,6 +99,8 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
+        <InstallBanner />
+
         <div className="mb-8 text-center">
           <img
             src="/icon-192.png"
