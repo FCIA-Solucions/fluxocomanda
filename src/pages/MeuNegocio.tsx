@@ -237,12 +237,12 @@ export default function MeuNegocio() {
             <section className="space-y-3 rounded-2xl bg-card p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Users className="h-5 w-5" />
+                  {hasPaidPlan ? <Users className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">Equipe</p>
+                  <p className="text-sm font-semibold text-foreground">Gerenciar Equipe</p>
                   <p className="text-xs text-muted-foreground">
-                    Cadastre garçons que só veem comandas
+                    Adicione garçons reais ao seu negócio
                   </p>
                 </div>
               </div>
@@ -258,17 +258,28 @@ export default function MeuNegocio() {
                   Gerenciar garçons
                 </Button>
               ) : (
-                <div className="space-y-2 rounded-xl border border-dashed border-border bg-background/40 p-3 text-center">
-                  <Lock className="mx-auto h-5 w-5 text-muted-foreground" />
-                  <p className="text-sm text-foreground">
-                    Gerenciar garçons está disponível a partir do plano Padrão.
-                  </p>
+                <div className="space-y-3 rounded-xl border border-dashed border-border bg-background/40 p-3">
+                  <ul className="space-y-1 text-xs text-foreground">
+                    <li>
+                      <span className="font-semibold">Plano Padrão</span> — até 3 garçons ·{" "}
+                      <span className="text-muted-foreground">R$ 49,90/mês</span>
+                    </li>
+                    <li>
+                      <span className="font-semibold">Plano Profissional</span> — até 8 garçons ·{" "}
+                      <span className="text-muted-foreground">R$ 79,90/mês</span>
+                    </li>
+                  </ul>
                   <Button
                     size="sm"
                     className="w-full"
-                    onClick={() => navigate("/assinatura")}
+                    onClick={() => {
+                      const email = user?.email ?? "";
+                      const text = `Olá! Quero fazer upgrade do FluxoComanda para adicionar garçons. Meu email: ${email}`;
+                      const url = `https://wa.me/5594999553574?text=${encodeURIComponent(text)}`;
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
                   >
-                    Fazer upgrade →
+                    💬 Fazer upgrade via WhatsApp →
                   </Button>
                 </div>
               )}
