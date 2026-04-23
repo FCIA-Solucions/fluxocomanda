@@ -214,40 +214,24 @@ export default function ComandaDetalhe() {
   const confirmPayment = async () => {
     if (!order || !user || !payment) return;
     setConfirming(true);
-    const finalTotal = total;
-    const nowISO = new Date().toISOString();
 
-    // 1) Inserir sale
-    const { error: saleErr } = await supabase.from("sales").insert({
-      user_id: user.id,
-      order_id: order.id,
-      total: finalTotal,
-      payment_method: payment,
+    // Fechamento ATÔMICO via RPC: calcula total, registra venda e
+    // fecha a comanda em uma única transação. Em caso de erro,
+    // o Postgres faz rollback automático de tudo.
+    const { data, error } = await supabase.rpc("fechar_comanda", {
+      p_order_id: order.id,
+      p_payment_method: payment,
     });
-    if (saleErr) {
-      setConfirming(false);
-      toast.error("Erro ao registrar venda");
-      return;
-    }
-
-    // 2) Atualizar order
-    const { error: orderErr } = await supabase
-      .from("orders")
-      .update({
-        status: "closed",
-        closed_at: nowISO,
-        payment_method: payment,
-        total: finalTotal,
-      })
-      .eq("id", order.id);
-    if (orderErr) {
-      setConfirming(false);
-      toast.error("Erro ao fechar comanda");
-      return;
-    }
 
     setConfirming(false);
-    toast.success(`✅ Venda de ${brl.format(finalTotal)} registrada!`);
+
+    if (error) {
+      toast.error(error.message || "Erro ao fechar comanda");
+      return;
+    }
+
+    const finalTotal = (data as { total?: number } | null)?.total ?? total;
+    toast.success(`✅ Venda de ${brl.format(Number(finalTotal))} registrada!`);
     navigate("/dashboard", { replace: true });
   };
 
