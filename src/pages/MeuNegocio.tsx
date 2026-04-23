@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, RotateCcw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
@@ -24,6 +34,8 @@ export default function MeuNegocio() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     setBusinessName(business.business_name ?? "");
@@ -81,6 +93,25 @@ export default function MeuNegocio() {
     }
     toast.success("Configurações salvas! ✅");
     await refresh();
+  };
+
+  const handleReset = async () => {
+    setResetting(true);
+    const { data, error } = await supabase.rpc("reset_today");
+    setResetting(false);
+    setResetOpen(false);
+    if (error) {
+      toast.error("Erro ao resetar", { description: error.message });
+      return;
+    }
+    const r = (data ?? {}) as {
+      sales_deleted?: number;
+      orders_deleted?: number;
+      closures_deleted?: number;
+    };
+    toast.success(
+      `Reset concluído: ${r.sales_deleted ?? 0} vendas, ${r.orders_deleted ?? 0} comandas e ${r.closures_deleted ?? 0} fechamento(s) apagados.`
+    );
   };
 
   return (
@@ -225,6 +256,28 @@ export default function MeuNegocio() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
 
+          {/* Resetar dia de hoje */}
+          <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <RotateCcw className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Resetar dia de hoje</p>
+                <p className="text-xs text-muted-foreground">
+                  Apaga vendas, comandas e fechamento do dia. Não afeta produtos.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="destructive"
+              className="h-11 w-full"
+              onClick={() => setResetOpen(true)}
+            >
+              Resetar agora
+            </Button>
+          </section>
+
           {/* Sobre o app */}
           <section className="space-y-2 rounded-2xl bg-card p-4 text-center">
             <p className="text-sm font-semibold text-foreground">
@@ -250,6 +303,31 @@ export default function MeuNegocio() {
           </section>
         </div>
       )}
+
+      <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar dia de hoje?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação vai apagar TODAS as vendas, comandas e fechamentos de
+              caixa do dia de hoje da sua conta. Os relatórios também serão
+              zerados para hoje. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleReset();
+              }}
+              disabled={resetting}
+            >
+              {resetting ? "Resetando…" : "Sim, resetar hoje"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
