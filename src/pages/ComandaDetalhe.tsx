@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
@@ -14,7 +15,22 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useBusiness } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
+
+function maskPhoneBR(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 3) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+const paymentLabel: Record<string, string> = {
+  dinheiro: "Dinheiro",
+  pix: "PIX",
+  cartao: "Cartão",
+};
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
