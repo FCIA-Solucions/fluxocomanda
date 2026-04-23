@@ -85,25 +85,6 @@ export default function MeuNegocio() {
     await refresh();
   };
 
-  const handleReset = async () => {
-    setResetting(true);
-    const { data, error } = await supabase.rpc("reset_today");
-    setResetting(false);
-    setResetOpen(false);
-    if (error) {
-      toast.error("Erro ao resetar", { description: error.message });
-      return;
-    }
-    const r = (data ?? {}) as {
-      sales_deleted?: number;
-      orders_deleted?: number;
-      closures_deleted?: number;
-    };
-    toast.success(
-      `Reset concluído: ${r.sales_deleted ?? 0} vendas, ${r.orders_deleted ?? 0} comandas e ${r.closures_deleted ?? 0} fechamento(s) apagados.`
-    );
-  };
-
   return (
     <AppShell>
       <header className="mb-6 flex items-center gap-3">
