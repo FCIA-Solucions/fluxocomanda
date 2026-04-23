@@ -1,51 +1,53 @@
 
+## Status atual da implementação
 
-## Problema
+Boa notícia: a maior parte do que você pediu já está no código (do turno anterior). Vou só confirmar o que está pronto e listar os ajustes pequenos que faltam.
 
-Seu amigo abriu `https://fluxocomanda.lovable.app` no Android e nada apareceu para instalar. A causa real **não é** o `beforeinstallprompt` — é que ele **nunca chegou na tela onde o banner mora**:
+### Já implementado ✅
 
-1. Ele entra em `/` → redireciona para `/dashboard`
-2. `/dashboard` é rota protegida → como ele não tem login, é mandado para `/auth`
-3. O componente `<InstallBanner />` está montado **somente dentro do `Dashboard`**, que ele nunca vê
-4. Resultado: zero chance de instalar pelo banner do app
+| Item | Onde | Status |
+|---|---|---|
+| 1. Hook `useProfile()` com `role`, `ownerId`, `effectiveUserId` | `src/hooks/useProfile.tsx` | OK |
+| 2. Menu condicional (garçom vê só Comandas) | `src/components/BottomNav.tsx` | OK |
+| 3a. Botão "Cancelar item" oculto p/ garçom | `ComandaDetalhe.tsx` linha 417 | OK |
+| 3b. Comandas usa `effectiveUserId` (garçom vê dados do dono) | `Comandas.tsx`, `NovaComanda.tsx`, `ComandaDetalhe.tsx` | OK |
+| 3c. Garçom não tem acesso a Dashboard/Caixa/Relatórios (= não vê faturamento total do dia) | `App.tsx` rotas com `adminOnly` + redirect em `Index.tsx` | OK |
+| 4. Card "Modo Demonstração" só p/ admin em Meu Negócio | `MeuNegocio.tsx` linhas 279-305 | OK |
+| 5. Card "Equipe" com gate de upgrade só p/ admin | `MeuNegocio.tsx` linhas 236-276 | OK |
 
-Além disso, mesmo se fosse uma tela pública, o Chrome no Android **só mostra o prompt nativo de instalação** depois que o usuário tem um certo "engajamento" (alguns segundos de uso, scroll, clique). Para um visitante que abre e fecha rápido, o evento nem dispara.
+### Ajustes pequenos a fazer
 
-## Solução
+**A. Card "Equipe" — trocar redirect para WhatsApp (item 5 do briefing)**
+Hoje o botão "Fazer upgrade →" navega para `/assinatura`. O briefing pede um link WhatsApp pré-preenchido. Vou alterar para abrir:
+```
+https://wa.me/5594999553574?text=Olá!+Quero+fazer+upgrade+do+FluxoComanda+para+adicionar+garçons.+Meu+email:+<email>
+```
+Usando `useAuth().user?.email` ou `useProfile().email` para preencher.
 
-### 1. Mostrar o banner também na tela de login (`/auth`)
-Renderizar `<InstallBanner />` no topo da página `/auth`, para que qualquer visitante (logado ou não) veja o convite de instalar.
+**B. Card "Equipe" — enriquecer copy conforme briefing**
+Adicionar as linhas dos planos:
+- "Plano Padrão — até 3 garçons · R$ 49,90/mês"
+- "Plano Profissional — até 8 garçons · R$ 79,90/mês"
 
-### 2. Criar uma página pública dedicada `/instalar`
-Página simples explicando o app e com botão "Instalar agora" — funciona em qualquer dispositivo:
-- **Android (Chrome/Edge):** dispara o prompt nativo se disponível, senão mostra instruções com print do menu ⋮ → "Instalar app"
-- **iPhone (Safari):** mostra instruções "Compartilhar → Adicionar à Tela de Início"
-- **Desktop:** mostra QR code apontando para `https://fluxocomanda.lovable.app/instalar` para o visitante abrir no celular
+Botão muda para: `💬 Fazer upgrade via WhatsApp →`
 
-Esse é o link "amigável" para compartilhar com clientes/amigos: `fluxocomanda.lovable.app/instalar`
+**C. "Aplicar desconto" — não existe**
+Procurei no código e não há funcionalidade de desconto em `ComandaDetalhe.tsx`. Não há botão para ocultar — nada a fazer aqui.
 
-### 3. Reforçar a captura do `beforeinstallprompt` globalmente
-O listener já foi movido para o `main.tsx` na rodada anterior. Vou garantir que o `InstallBanner` na tela `/auth` também consuma o evento já capturado e não dependa do timing do React montar.
+**D. "Faturamento total do dia" para garçom — já protegido**
+Garçom não acessa Dashboard/Caixa/Relatórios (rotas `adminOnly`). Em `Comandas.tsx` só aparecem valores por comanda individual, não soma. Conforme.
 
-### 4. Remover o critério "dismissado para sempre" quando o usuário acessa `/instalar`
-Se ele entrou explicitamente na página de instalar, ignora o `localStorage` de dispensar — afinal, ele veio justamente para instalar.
+### Arquivos que serão editados
 
-## Arquivos a alterar
+- `src/pages/MeuNegocio.tsx` — apenas o bloco do card "Equipe" (linhas 236-276): trocar destino do botão e adicionar copy dos planos.
 
-- `src/pages/Auth.tsx` — renderizar `<InstallBanner />` no topo, antes do form de login
-- `src/pages/Instalar.tsx` (novo) — página pública dedicada à instalação, com detecção de SO, botão de instalar, instruções visuais e QR code para desktop
-- `src/App.tsx` — registrar a rota pública `/instalar` (sem `ProtectedRoute`)
-- `src/components/InstallBanner.tsx` — pequeno ajuste: aceitar prop `forceShow` para ignorar o dismiss persistido quando vier da página `/instalar`
-- *(opcional)* `index.html` — adicionar meta tag `<meta name="apple-mobile-web-app-title" content="FluxoComanda">` já está, então só revisar
+### Teste manual após o ajuste (item 6 do briefing)
 
-## Como testar depois
+Você vai rodar:
+1. Login com `garcom.demo@fluxocomanda.app` / `Demo@2026`
+2. Confirmar que o menu inferior mostra apenas "Comandas"
+3. Confirmar que as comandas do admin aparecem (depende da migration SQL `effective_owner` já estar aplicada no Supabase)
+4. Abrir uma comanda e confirmar que o ícone de lixeira (remover item) está oculto
+5. Logar de volta como admin → ir em "Negócio" → ver os dois cards (Demo + Equipe com botão WhatsApp)
 
-1. Compartilhe `https://fluxocomanda.lovable.app/instalar` com o amigo
-2. Ele abre no Chrome do Android → vê a página com botão "Instalar agora"
-3. Clica → ou abre o prompt nativo, ou vê as instruções do menu ⋮
-4. App instalado na tela inicial em ~10 segundos
-
-## Observação importante
-
-Mesmo com tudo isso configurado, o Chrome Android pode **não disparar o prompt nativo na primeira visita** — isso é uma regra do próprio Chrome (precisa de engajamento). Por isso o fallback com instruções manuais é essencial e cobre 100% dos casos.
-
+> ⚠️ Se a migration SQL ainda não foi rodada no Supabase, o garçom não verá nada. O SQL está em `docs/sql/20260423_add_roles_and_owner.sql` e foi compartilhado nas mensagens anteriores.
