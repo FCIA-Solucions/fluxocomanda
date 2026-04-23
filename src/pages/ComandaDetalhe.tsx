@@ -233,7 +233,7 @@ export default function ComandaDetalhe() {
       return;
     }
 
-    const finalTotal = (data as { total?: number } | null)?.total ?? total;
+    const finalTotal = data?.total ?? total;
     toast.success(`✅ Venda de ${brl.format(Number(finalTotal))} registrada!`);
     navigate("/dashboard", { replace: true });
   };
