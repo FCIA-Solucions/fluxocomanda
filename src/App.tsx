@@ -6,6 +6,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProfileProvider } from "@/hooks/useProfile";
 import { BusinessProvider } from "@/hooks/useBusiness";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -48,26 +49,28 @@ const App = () => {
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <SubscriptionProvider>
-            <BusinessProvider>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/instalar" element={<Instalar />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/assinatura" element={<AuthOnlyRoute><Assinatura /></AuthOnlyRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/comandas" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
-                <Route path="/comandas/nova" element={<ProtectedRoute><NovaComanda /></ProtectedRoute>} />
-                <Route path="/comandas/:id" element={<ProtectedRoute><ComandaDetalhe /></ProtectedRoute>} />
-                <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
-                <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
-                <Route path="/meu-negocio" element={<ProtectedRoute><MeuNegocio /></ProtectedRoute>} />
-                <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BusinessProvider>
-          </SubscriptionProvider>
+          <ProfileProvider>
+            <SubscriptionProvider>
+              <BusinessProvider>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/instalar" element={<Instalar />} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="/assinatura" element={<AuthOnlyRoute><Assinatura /></AuthOnlyRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
+                  <Route path="/comandas" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
+                  <Route path="/comandas/nova" element={<ProtectedRoute><NovaComanda /></ProtectedRoute>} />
+                  <Route path="/comandas/:id" element={<ProtectedRoute><ComandaDetalhe /></ProtectedRoute>} />
+                  <Route path="/produtos" element={<ProtectedRoute adminOnly><Produtos /></ProtectedRoute>} />
+                  <Route path="/caixa" element={<ProtectedRoute adminOnly><Caixa /></ProtectedRoute>} />
+                  <Route path="/meu-negocio" element={<ProtectedRoute adminOnly><MeuNegocio /></ProtectedRoute>} />
+                  <Route path="/relatorios" element={<ProtectedRoute adminOnly><Relatorios /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BusinessProvider>
+            </SubscriptionProvider>
+          </ProfileProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
