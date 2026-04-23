@@ -104,7 +104,7 @@ export default function Dashboard() {
             <img
               src={business.logo_url}
               alt={business.business_name ?? "Logo"}
-              className="h-12 w-12 rounded-xl bg-card object-contain"
+              className="h-12 w-12 rounded-xl bg-card object-cover"
             />
           )}
           <div>
