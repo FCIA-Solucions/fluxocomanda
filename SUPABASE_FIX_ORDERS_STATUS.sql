@@ -1,13 +1,18 @@
--- ============================================================
--- FluxoComanda — Padronizar status de comanda fechada
--- Execute no SQL Editor:
--- https://supabase.com/dashboard/project/gessdgkkbpsuvykvokqd/sql/new
--- ============================================================
+-- =====================================================================
+-- FIX: Padronizar status de comanda para 'closed'
+--
+-- ATENÇÃO: a tabela do projeto chama-se "orders" (minúsculo, sem aspas),
+-- NÃO "Ordens". O nome com aspas e maiúscula causa "relation does not
+-- exist". O script abaixo usa o nome correto.
+--
+-- COMO RODAR:
+-- 1. Abra: https://supabase.com/dashboard/project/gessdgkkbpsuvykvokqd/sql/new
+-- 2. Cole o conteúdo abaixo e clique em "Run".
+-- =====================================================================
 
--- Padroniza qualquer registro antigo que tenha sido salvo como 'fechada'
-update public.orders
-   set status = 'closed'
- where status = 'fechada';
+UPDATE public.orders
+   SET status = 'closed'
+ WHERE status = 'fechada';
 
--- Verificação rápida (deve retornar apenas 'open' e 'closed')
--- select status, count(*) from public.orders group by status;
+-- (Opcional) confere se restou algum legado
+SELECT status, COUNT(*) FROM public.orders GROUP BY status;
