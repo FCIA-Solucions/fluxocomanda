@@ -79,7 +79,7 @@ async function fetchClosedOrders(userId: string, startISO: string, endISO: strin
     .from("orders")
     .select("id, customer_name, total, closed_at, created_at")
     .eq("user_id", userId)
-    .eq("status", "fechada")
+    .eq("status", "closed")
     .gte("closed_at", startISO)
     .lt("closed_at", endISO)
     .order("closed_at", { ascending: true });
