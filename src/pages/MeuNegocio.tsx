@@ -232,6 +232,78 @@ export default function MeuNegocio() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
 
+          {/* Equipe (gerenciar garçons) — somente admin */}
+          {isAdmin && (
+            <section className="space-y-3 rounded-2xl bg-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">Equipe</p>
+                  <p className="text-xs text-muted-foreground">
+                    Cadastre garçons que só veem comandas
+                  </p>
+                </div>
+              </div>
+
+              {hasPaidPlan ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    toast.info("Em breve: gerenciar garçons direto pelo app")
+                  }
+                >
+                  Gerenciar garçons
+                </Button>
+              ) : (
+                <div className="space-y-2 rounded-xl border border-dashed border-border bg-background/40 p-3 text-center">
+                  <Lock className="mx-auto h-5 w-5 text-muted-foreground" />
+                  <p className="text-sm text-foreground">
+                    Gerenciar garçons está disponível a partir do plano Padrão.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate("/assinatura")}
+                  >
+                    Fazer upgrade →
+                  </Button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Modo Demonstração — só para admin */}
+          {isAdmin && (
+            <section className="space-y-2 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <p className="text-sm font-semibold text-foreground">
+                  Modo Demonstração
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Garçom demo disponível para você testar o fluxo limitado.
+              </p>
+              <div className="rounded-lg bg-card p-3 text-sm">
+                <p className="text-muted-foreground">
+                  Email:{" "}
+                  <span className="font-mono text-foreground">
+                    garcom.demo@fluxocomanda.app
+                  </span>
+                </p>
+                <p className="text-muted-foreground">
+                  Senha: <span className="font-mono text-foreground">Demo@2026</span>
+                </p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Disponível nos planos Padrão, Profissional e Ilimitado.
+              </p>
+            </section>
+          )}
+
           {/* Sobre o app */}
           <section className="space-y-2 rounded-2xl bg-card p-4 text-center">
             <p className="text-sm font-semibold text-foreground">
