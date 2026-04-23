@@ -218,10 +218,13 @@ export default function ComandaDetalhe() {
     // Fechamento ATÔMICO via RPC: calcula total, registra venda e
     // fecha a comanda em uma única transação. Em caso de erro,
     // o Postgres faz rollback automático de tudo.
-    const { data, error } = await supabase.rpc("fechar_comanda", {
-      p_order_id: order.id,
-      p_payment_method: payment,
-    });
+    const { data, error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: { total?: number } | null; error: { message: string } | null }>)(
+      "fechar_comanda",
+      { p_order_id: order.id, p_payment_method: payment }
+    );
 
     setConfirming(false);
 
