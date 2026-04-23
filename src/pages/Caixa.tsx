@@ -77,20 +77,29 @@ export default function Caixa() {
     todayStart.setHours(0, 0, 0, 0);
     const todayISO = todayStart.toISOString();
 
-    const [salesRes, closureRes] = await Promise.all([
-      supabase
-        .from("sales")
-        .select("id, total, payment_method, created_at, order_id")
-        .eq("user_id", user.id)
-        .gte("created_at", todayISO)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("cash_closures")
-        .select("id, closed_at, business_day, type, closed_by_name, total")
-        .eq("user_id", user.id)
-        .eq("business_day", todayBd)
-        .maybeSingle(),
-    ]);
+    // 1) Busca o fechamento de hoje primeiro — define o "ponto de corte"
+    const closureRes = await supabase
+      .from("cash_closures")
+      .select("id, closed_at, business_day, type, closed_by_name, total")
+      .eq("user_id", user.id)
+      .eq("business_day", todayBd)
+      .maybeSingle();
+
+    const closure = (closureRes.data as ClosureRow | null) ?? null;
+    if (closureRes.error) {
+      console.warn("cash_closures indisponível:", closureRes.error.message);
+    }
+
+    // Caixa fechado → mostra apenas vendas feitas APÓS o fechamento (zera visualmente)
+    // Caixa aberto → mostra todas as vendas desde 00:00
+    const fromISO = closure ? closure.closed_at : todayISO;
+
+    const salesRes = await supabase
+      .from("sales")
+      .select("id, total, payment_method, created_at, order_id")
+      .eq("user_id", user.id)
+      .gt("created_at", fromISO)
+      .order("created_at", { ascending: false });
 
     const rows = (salesRes.data ?? []) as SaleRow[];
 
@@ -106,15 +115,7 @@ export default function Caixa() {
     }
 
     setSales(rows.map((s) => ({ ...s, customer_name: s.order_id ? nameMap.get(s.order_id) ?? null : null })));
-
-    // Se a tabela cash_closures ainda não foi criada no Supabase, ignora o erro
-    // e mantém o caixa como aberto para o botão "Fechar Caixa" aparecer.
-    if (closureRes.error) {
-      console.warn("cash_closures indisponível:", closureRes.error.message);
-      setTodayClosure(null);
-    } else {
-      setTodayClosure((closureRes.data as ClosureRow | null) ?? null);
-    }
+    setTodayClosure(closure);
     setLoading(false);
   }, [user, todayBd]);
 
