@@ -34,14 +34,21 @@ function isInStandalone(): boolean {
 
 type Mode = "native" | "ios" | "android-manual" | null;
 
-export function InstallBanner() {
+interface InstallBannerProps {
+  /** Ignora o "não mostrar novamente" salvo (útil na página /instalar). */
+  forceShow?: boolean;
+  /** Esconde o botão "X" de dispensar (útil quando o banner é o próprio CTA da página). */
+  hideDismiss?: boolean;
+}
+
+export function InstallBanner({ forceShow = false, hideDismiss = false }: InstallBannerProps = {}) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<Mode>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (localStorage.getItem(DISMISS_KEY) === "1") return;
+    if (!forceShow && localStorage.getItem(DISMISS_KEY) === "1") return;
     if (isInStandalone()) return;
 
     // 1) Já temos um prompt capturado em main.tsx?
