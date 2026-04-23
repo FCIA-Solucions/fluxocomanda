@@ -252,31 +252,6 @@ export default function MeuNegocio() {
           </section>
         </div>
       )}
-
-      <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Resetar dia de hoje?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação vai apagar TODAS as vendas, comandas e fechamentos de
-              caixa do dia de hoje da sua conta. Os relatórios também serão
-              zerados para hoje. Essa ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={resetting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleReset();
-              }}
-              disabled={resetting}
-            >
-              {resetting ? "Resetando…" : "Sim, resetar hoje"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppShell>
   );
 }
