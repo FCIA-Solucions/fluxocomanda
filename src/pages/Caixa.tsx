@@ -270,34 +270,18 @@ export default function Caixa() {
         <PaymentCard icon={<CreditCard className="h-4 w-4" />} label="Cartão" value={totalCartao} loading={loading} />
       </section>
 
-      {/* Status / Botão fechar */}
-      {!loading && (
+      {/* Botão fechar caixa (some quando já está fechado) */}
+      {!loading && !isClosed && (
         <div className="mb-6">
-          {isClosed ? (
-            <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  {todayClosure!.type === "manual"
-                    ? `Fechado manualmente por ${todayClosure!.closed_by_name ?? "—"}`
-                    : "Fechamento automático"}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  às {time.format(new Date(todayClosure!.closed_at))}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <Button
-              variant="destructive"
-              className="h-12 w-full text-base font-semibold"
-              disabled={sales.length === 0}
-              onClick={() => setConfirmOpen(true)}
-            >
-              <Lock className="mr-2 h-4 w-4" />
-              Fechar Caixa
-            </Button>
-          )}
+          <Button
+            variant="destructive"
+            className="h-12 w-full text-base font-semibold"
+            disabled={sales.length === 0}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Lock className="mr-2 h-4 w-4" />
+            Fechar Caixa
+          </Button>
         </div>
       )}
 
