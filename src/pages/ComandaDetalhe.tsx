@@ -322,7 +322,11 @@ export default function ComandaDetalhe() {
     }
     const fullNumber = digits.startsWith("55") ? digits : `55${digits}`;
     const message = buildWhatsAppMessage();
-    const url = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
+    const encoded = encodeURIComponent(message);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `whatsapp://send?phone=${fullNumber}&text=${encoded}`
+      : `https://wa.me/${fullNumber}?text=${encoded}`;
     window.open(url, "_blank", "noopener,noreferrer");
     setCloseOpen(false);
     setClosedSnapshot(null);
