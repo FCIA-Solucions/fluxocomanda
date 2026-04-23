@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,15 +9,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
+import { useProfile } from "@/hooks/useProfile";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { BRAND_COLORS, DEFAULT_BRAND_COLOR } from "@/lib/colorUtils";
 import { cn } from "@/lib/utils";
 
 export default function MeuNegocio() {
   const { user } = useAuth();
+  const { role } = useProfile();
+  const { status } = useSubscription();
   const navigate = useNavigate();
   const { business, loading, refresh, setLocal } = useBusiness();
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const isAdmin = role === "admin";
+  const hasPaidPlan = status === "active";
 
   const [businessName, setBusinessName] = useState("");
   const [brandColor, setBrandColor] = useState<string>(DEFAULT_BRAND_COLOR);
