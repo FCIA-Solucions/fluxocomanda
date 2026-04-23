@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,8 @@ export default function Auth() {
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSuPassword, setShowSuPassword] = useState(false);
 
   // signin form state
   const [email, setEmail] = useState("");
@@ -131,17 +133,28 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Senha</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ height: 52 }}
-                    className="text-base"
-                    placeholder="••••••"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ height: 52 }}
+                      className="text-base pr-12"
+                      placeholder="••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full text-base font-semibold" style={{ height: 56 }}>
                   {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Entrar"}
@@ -190,17 +203,28 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Senha</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    autoComplete="new-password"
-                    value={suPassword}
-                    onChange={(e) => setSuPassword(e.target.value)}
-                    style={{ height: 52 }}
-                    className="text-base"
-                    placeholder="Mínimo 6 caracteres"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showSuPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={suPassword}
+                      onChange={(e) => setSuPassword(e.target.value)}
+                      style={{ height: 52 }}
+                      className="text-base pr-12"
+                      placeholder="Mínimo 6 caracteres"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSuPassword((v) => !v)}
+                      aria-label={showSuPassword ? "Ocultar senha" : "Mostrar senha"}
+                      className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showSuPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" disabled={submitting} className="w-full text-base font-semibold" style={{ height: 56 }}>
                   {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar conta"}
