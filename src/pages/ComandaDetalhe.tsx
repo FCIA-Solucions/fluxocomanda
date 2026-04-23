@@ -235,6 +235,8 @@ export default function ComandaDetalhe() {
     setCloseOpen(true);
   };
 
+  const postSaleRedirect = isGarcom ? "/comandas" : "/dashboard";
+
   const closeSheetAndCleanUrl = (open: boolean) => {
     setCloseOpen(open);
     if (!open && searchParams.get("fechar")) {
@@ -242,8 +244,8 @@ export default function ComandaDetalhe() {
       setSearchParams(searchParams, { replace: true });
     }
     if (!open && closedSnapshot) {
-      // Após fechar o modal pós-venda, voltar ao dashboard
-      navigate("/dashboard", { replace: true });
+      // Após fechar o modal pós-venda, voltar à tela inicial conforme role
+      navigate(postSaleRedirect, { replace: true });
     }
   };
 
@@ -324,13 +326,13 @@ export default function ComandaDetalhe() {
     window.open(url, "_blank", "noopener,noreferrer");
     setCloseOpen(false);
     setClosedSnapshot(null);
-    navigate("/dashboard", { replace: true });
+    navigate(postSaleRedirect, { replace: true });
   };
 
   const closeWithoutSending = () => {
     setCloseOpen(false);
     setClosedSnapshot(null);
-    navigate("/dashboard", { replace: true });
+    navigate(postSaleRedirect, { replace: true });
   };
 
   if (loading) {
@@ -412,15 +414,17 @@ export default function ComandaDetalhe() {
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
-                        aria-label="Remover"
-                        onClick={() => removeItem(i)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isGarcom && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
+                          aria-label="Remover"
+                          onClick={() => removeItem(i)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </>
                   )}
                   {isClosed && (
