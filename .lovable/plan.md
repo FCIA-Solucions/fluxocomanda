@@ -1,63 +1,51 @@
 
 
-## Adicionar branding FCIA ao FluxoComanda
+## Problema
 
-Adicionar identidade da marca FCIA (empresa) em pontos estratégicos do app, mantendo o FluxoComanda como produto principal.
+Seu amigo abriu `https://fluxocomanda.lovable.app` no Android e nada apareceu para instalar. A causa real **não é** o `beforeinstallprompt` — é que ele **nunca chegou na tela onde o banner mora**:
 
-### 1. Asset da logo FCIA
-Copiar a imagem enviada (`user-uploads://logo.png`) para `src/assets/fcia-logo.png` para uso nos componentes (splash + rodapé do login).
+1. Ele entra em `/` → redireciona para `/dashboard`
+2. `/dashboard` é rota protegida → como ele não tem login, é mandado para `/auth`
+3. O componente `<InstallBanner />` está montado **somente dentro do `Dashboard`**, que ele nunca vê
+4. Resultado: zero chance de instalar pelo banner do app
 
-### 2. Splash Screen (novo componente)
-Criar `src/components/SplashScreen.tsx`:
-- Tela cheia, fundo `#0f172a`
-- Centro: ícone do FluxoComanda (`/icon-192.png`) com leve animação (fade+scale)
-- Texto "FluxoComanda" abaixo (bold)
-- Rodapé: "by **FCIA**" (muted, FCIA em destaque verde `#22c55e`)
-- Duração: 2 segundos, depois fade-out suave
+Além disso, mesmo se fosse uma tela pública, o Chrome no Android **só mostra o prompt nativo de instalação** depois que o usuário tem um certo "engajamento" (alguns segundos de uso, scroll, clique). Para um visitante que abre e fecha rápido, o evento nem dispara.
 
-Integrar em `src/App.tsx`:
-- Estado `showSplash` controlado por `sessionStorage` (mostra apenas 1x por sessão para não atrapalhar navegação interna)
-- Renderizar `<SplashScreen />` por cima das rotas enquanto `showSplash === true`
+## Solução
 
-### 3. Rodapé na tela /auth
-Em `src/pages/Auth.tsx`, abaixo do card branco do formulário (depois de `</div>` do card, antes do fechamento do container):
-```
-Um produto
-[logo FCIA pequena] FCIA       ← bold, verde
-Soluções Inteligentes          ← muted pequeno
-```
-Layout vertical centralizado, espaçamento `mt-8`.
+### 1. Mostrar o banner também na tela de login (`/auth`)
+Renderizar `<InstallBanner />` no topo da página `/auth`, para que qualquer visitante (logado ou não) veja o convite de instalar.
 
-### 4. Rodapé na tela /assinatura
-Em `src/pages/Assinatura.tsx`, adicionar abaixo do botão "Sair da conta":
-- Texto pequeno muted centralizado: "FluxoComanda é um produto **FCIA** · [fcia.com.br](https://fcia.com.br)"
+### 2. Criar uma página pública dedicada `/instalar`
+Página simples explicando o app e com botão "Instalar agora" — funciona em qualquer dispositivo:
+- **Android (Chrome/Edge):** dispara o prompt nativo se disponível, senão mostra instruções com print do menu ⋮ → "Instalar app"
+- **iPhone (Safari):** mostra instruções "Compartilhar → Adicionar à Tela de Início"
+- **Desktop:** mostra QR code apontando para `https://fluxocomanda.lovable.app/instalar` para o visitante abrir no celular
 
-### 5. Card "Sobre o app" em /meu-negocio
-Em `src/pages/MeuNegocio.tsx`, adicionar como última seção (após o botão Salvar):
-- Card com fundo `bg-card` arredondado
-- Linha 1: "FluxoComanda **v1.0**"
-- Linha 2: "Desenvolvido por FCIA Soluções Inteligentes"
-- Linha 3: link clicável → https://fciapremium.lovable.app/ (abre em nova aba)
-- Linha 4 (muted, xs): "© 2026 FCIA. Todos os direitos reservados."
+Esse é o link "amigável" para compartilhar com clientes/amigos: `fluxocomanda.lovable.app/instalar`
 
-### 6. PWA manifest
-Em `public/manifest.json`, atualizar campo `description`:
-```
-"FluxoComanda — Um produto FCIA. Comanda digital para comércios locais."
-```
+### 3. Reforçar a captura do `beforeinstallprompt` globalmente
+O listener já foi movido para o `main.tsx` na rodada anterior. Vou garantir que o `InstallBanner` na tela `/auth` também consuma o evento já capturado e não dependa do timing do React montar.
 
-### Detalhes técnicos
-- Logo FCIA usada apenas no splash (acima do "by FCIA") e como ícone pequeno no rodapé do /auth — em `src/assets/` para bundling otimizado, importada como módulo ES6.
-- A cor verde `#22c55e` no destaque "FCIA" é fixa (identidade da marca FCIA), independente da `brand_color` que o usuário escolher em Meu Negócio.
-- Splash usa `sessionStorage` (não `localStorage`) para reaparecer a cada nova sessão do navegador, mas não em cada navegação.
-- Sem alterações no banco de dados.
+### 4. Remover o critério "dismissado para sempre" quando o usuário acessa `/instalar`
+Se ele entrou explicitamente na página de instalar, ignora o `localStorage` de dispensar — afinal, ele veio justamente para instalar.
 
-### Arquivos afetados
-- `src/assets/fcia-logo.png` (novo, copiado do upload)
-- `src/components/SplashScreen.tsx` (novo)
-- `src/App.tsx` (integrar splash)
-- `src/pages/Auth.tsx` (rodapé FCIA)
-- `src/pages/Assinatura.tsx` (rodapé FCIA)
-- `src/pages/MeuNegocio.tsx` (card "Sobre o app")
-- `public/manifest.json` (description)
+## Arquivos a alterar
+
+- `src/pages/Auth.tsx` — renderizar `<InstallBanner />` no topo, antes do form de login
+- `src/pages/Instalar.tsx` (novo) — página pública dedicada à instalação, com detecção de SO, botão de instalar, instruções visuais e QR code para desktop
+- `src/App.tsx` — registrar a rota pública `/instalar` (sem `ProtectedRoute`)
+- `src/components/InstallBanner.tsx` — pequeno ajuste: aceitar prop `forceShow` para ignorar o dismiss persistido quando vier da página `/instalar`
+- *(opcional)* `index.html` — adicionar meta tag `<meta name="apple-mobile-web-app-title" content="FluxoComanda">` já está, então só revisar
+
+## Como testar depois
+
+1. Compartilhe `https://fluxocomanda.lovable.app/instalar` com o amigo
+2. Ele abre no Chrome do Android → vê a página com botão "Instalar agora"
+3. Clica → ou abre o prompt nativo, ou vê as instruções do menu ⋮
+4. App instalado na tela inicial em ~10 segundos
+
+## Observação importante
+
+Mesmo com tudo isso configurado, o Chrome Android pode **não disparar o prompt nativo na primeira visita** — isso é uma regra do próprio Chrome (precisa de engajamento). Por isso o fallback com instruções manuais é essencial e cobre 100% dos casos.
 
