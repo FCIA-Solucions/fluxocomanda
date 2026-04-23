@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -31,6 +32,7 @@ const paymentIcon = (m: string | null) => {
 
 export default function Comandas() {
   const { user } = useAuth();
+  const { effectiveUserId } = useProfile();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"open" | "closed">("open");
   const [openOrders, setOpenOrders] = useState<Order[]>([]);
@@ -39,7 +41,7 @@ export default function Comandas() {
   
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!user || !effectiveUserId) return;
     setLoading(true);
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -49,13 +51,13 @@ export default function Comandas() {
       supabase
         .from("orders")
         .select("id, customer_name, status, total, payment_method, created_at, closed_at")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .eq("status", "open")
         .order("created_at", { ascending: false }),
       supabase
         .from("orders")
         .select("id, customer_name, status, total, payment_method, created_at, closed_at")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .eq("status", "closed")
         .gte("closed_at", todayISO)
         .order("closed_at", { ascending: false }),
@@ -67,7 +69,7 @@ export default function Comandas() {
       setClosedOrders((closedRes.data ?? []) as Order[]);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, effectiveUserId]);
 
   useEffect(() => {
     load();

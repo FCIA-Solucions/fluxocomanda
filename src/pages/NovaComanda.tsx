@@ -7,16 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function NovaComanda() {
   const { user } = useAuth();
+  const { effectiveUserId } = useProfile();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user || !effectiveUserId) return;
     const trimmed = name.trim();
     if (!trimmed) {
       toast.error("Informe o nome ou mesa");
@@ -26,7 +28,7 @@ export default function NovaComanda() {
     const { data, error } = await supabase
       .from("orders")
       .insert({
-        user_id: user.id,
+        user_id: effectiveUserId,
         customer_name: trimmed,
         status: "open",
         total: 0,
