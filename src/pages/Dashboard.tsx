@@ -51,7 +51,10 @@ export default function Dashboard() {
     if (!user) return;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todayISO = todayStart.toISOString();
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const todayStartISO = todayStart.toISOString();
+    const todayEndISO = todayEnd.toISOString();
 
     const load = async () => {
       setLoading(true);
@@ -60,7 +63,8 @@ export default function Dashboard() {
           .from("sales")
           .select("total")
           .eq("user_id", user.id)
-          .gte("created_at", todayISO),
+          .gte("created_at", todayStartISO)
+          .lte("created_at", todayEndISO),
         supabase
           .from("orders")
           .select("id", { count: "exact", head: true })
@@ -71,7 +75,8 @@ export default function Dashboard() {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .eq("status", "closed")
-          .gte("closed_at", todayISO),
+          .gte("closed_at", todayStartISO)
+          .lte("closed_at", todayEndISO),
       ]);
 
       const sales = (salesRes.data ?? []) as { total: number }[];
