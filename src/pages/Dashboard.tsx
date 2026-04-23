@@ -98,7 +98,7 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-start justify-between gap-3">
+      <header className="mb-6 flex items-start gap-3 pr-12">
         <div className="flex items-center gap-3">
           {business.logo_url && (
             <img
@@ -114,9 +114,6 @@ export default function Dashboard() {
             </h1>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" className="min-h-touch min-w-touch">
-          <LogOut className="h-5 w-5" />
-        </Button>
       </header>
 
       <SubscriptionBanner />
