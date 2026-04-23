@@ -256,6 +256,28 @@ export default function MeuNegocio() {
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </button>
 
+          {/* Resetar dia de hoje */}
+          <section className="space-y-3 rounded-2xl border border-destructive/30 bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <RotateCcw className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Resetar dia de hoje</p>
+                <p className="text-xs text-muted-foreground">
+                  Apaga vendas, comandas e fechamento do dia. Não afeta produtos.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="destructive"
+              className="h-11 w-full"
+              onClick={() => setResetOpen(true)}
+            >
+              Resetar agora
+            </Button>
+          </section>
+
           {/* Sobre o app */}
           <section className="space-y-2 rounded-2xl bg-card p-4 text-center">
             <p className="text-sm font-semibold text-foreground">
