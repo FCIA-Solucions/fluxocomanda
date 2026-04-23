@@ -194,6 +194,18 @@ function DailyReport({ businessName }: { businessName: string }) {
           }),
           emptyMessage: EMPTY_MSG,
         },
+        {
+          title: "Fechamentos de Caixa",
+          head: ["Hora", "Tipo", "Responsável", "Vendas", "Total"],
+          rows: closures.map((c) => [
+            timeFmt.format(new Date(c.closed_at)),
+            c.type === "manual" ? "Manual" : "Automático",
+            c.closed_by_name ?? "—",
+            String(c.sales_count ?? 0),
+            fmtBRL(Number(c.total ?? 0)),
+          ]),
+          emptyMessage: "Nenhum fechamento de caixa neste dia.",
+        },
       ],
     });
   };
