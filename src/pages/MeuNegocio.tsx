@@ -124,7 +124,7 @@ export default function MeuNegocio() {
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl bg-background">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo do estabelecimento" className="h-full w-full object-contain" />
+                  <img src={logoUrl} alt="Logo do estabelecimento" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-xs text-muted-foreground">Sem logo</span>
                 )}
