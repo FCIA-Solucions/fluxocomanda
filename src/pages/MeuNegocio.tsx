@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -206,6 +206,24 @@ export default function MeuNegocio() {
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar"}
           </Button>
+
+          {/* Relatórios */}
+          <button
+            type="button"
+            onClick={() => navigate("/relatorios")}
+            className="flex w-full items-center justify-between rounded-2xl bg-card p-4 text-left transition-colors hover:bg-card/80"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Relatórios</p>
+                <p className="text-xs text-muted-foreground">Diário, mensal e anual com export em PDF</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </button>
 
           {/* Sobre o app */}
           <section className="space-y-2 rounded-2xl bg-card p-4 text-center">

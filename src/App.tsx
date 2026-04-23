@@ -19,6 +19,7 @@ import ComandaDetalhe from "./pages/ComandaDetalhe.tsx";
 import Produtos from "./pages/Produtos.tsx";
 import Caixa from "./pages/Caixa.tsx";
 import MeuNegocio from "./pages/MeuNegocio.tsx";
+import Relatorios from "./pages/Relatorios.tsx";
 import Assinatura from "./pages/Assinatura.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -58,6 +59,7 @@ const App = () => {
                 <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
                 <Route path="/caixa" element={<ProtectedRoute><Caixa /></ProtectedRoute>} />
                 <Route path="/meu-negocio" element={<ProtectedRoute><MeuNegocio /></ProtectedRoute>} />
+                <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BusinessProvider>
