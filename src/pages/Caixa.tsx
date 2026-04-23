@@ -106,7 +106,15 @@ export default function Caixa() {
     }
 
     setSales(rows.map((s) => ({ ...s, customer_name: s.order_id ? nameMap.get(s.order_id) ?? null : null })));
-    setTodayClosure((closureRes.data as ClosureRow | null) ?? null);
+
+    // Se a tabela cash_closures ainda não foi criada no Supabase, ignora o erro
+    // e mantém o caixa como aberto para o botão "Fechar Caixa" aparecer.
+    if (closureRes.error) {
+      console.warn("cash_closures indisponível:", closureRes.error.message);
+      setTodayClosure(null);
+    } else {
+      setTodayClosure((closureRes.data as ClosureRow | null) ?? null);
+    }
     setLoading(false);
   }, [user, todayBd]);
 
