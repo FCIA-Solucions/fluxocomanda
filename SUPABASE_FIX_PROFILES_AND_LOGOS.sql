@@ -1,76 +1,102 @@
--- ============================================================
--- FluxoComanda — Fix dos 2 bugs críticos
--- Execute este SQL no SQL Editor do seu projeto Supabase:
--- https://supabase.com/dashboard/project/gessdgkkbpsuvykvokqd/sql/new
--- ============================================================
+-- =====================================================================
+-- FIX: Tabela profiles incompleta + Bucket logos ausente
+--
+-- COMO RODAR:
+-- 1. Abra: https://supabase.com/dashboard/project/gessdgkkbpsuvykvokqd/sql/new
+-- 2. Cole TODO o conteúdo abaixo e clique em "Run".
+--
+-- Observação: a tabela do projeto chama-se "profiles" (minúsculo),
+-- não "Perfis". Os scripts abaixo são idempotentes — podem ser
+-- executados mais de uma vez sem causar erro.
+-- =====================================================================
 
--- ================================================================
+
+-- =====================================================================
 -- BUG 1 — Adicionar colunas faltantes em public.profiles
--- (não quebra registros existentes; usa defaults seguros)
--- ================================================================
-alter table public.profiles
-  add column if not exists business_name text,
-  add column if not exists logo_url text,
-  add column if not exists brand_color text default '#22c55e';
+-- =====================================================================
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS business_name TEXT,
+  ADD COLUMN IF NOT EXISTS logo_url      TEXT,
+  ADD COLUMN IF NOT EXISTS brand_color   TEXT DEFAULT '#22c55e';
 
--- Garantir que registros antigos tenham brand_color preenchido
-update public.profiles
-   set brand_color = '#22c55e'
- where brand_color is null;
+-- Backfill: registros antigos ficam com a cor padrão
+UPDATE public.profiles
+   SET brand_color = '#22c55e'
+ WHERE brand_color IS NULL;
 
--- Garantir que policies de SELECT/UPDATE existem (idempotente)
-alter table public.profiles enable row level security;
 
-drop policy if exists "profiles_select_own" on public.profiles;
-create policy "profiles_select_own" on public.profiles
-  for select to authenticated using (auth.uid() = id);
+-- =====================================================================
+-- BUG 2 — Bucket "logos" no Storage
+-- =====================================================================
 
-drop policy if exists "profiles_update_own" on public.profiles;
-create policy "profiles_update_own" on public.profiles
-  for update to authenticated using (auth.uid() = id);
-
--- ================================================================
--- BUG 2 — Criar bucket "logos" + policies
--- ================================================================
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
+-- Cria (ou atualiza) o bucket "logos":
+--   public = true
+--   max file size = 2 MB
+--   MIME types permitidos: png, jpeg, webp
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
   'logos',
   'logos',
   true,
-  2097152, -- 2MB
-  array['image/png','image/jpeg','image/webp']
+  2097152,
+  ARRAY['image/png', 'image/jpeg', 'image/webp']
 )
-on conflict (id) do update
-  set public = excluded.public,
-      file_size_limit = excluded.file_size_limit,
-      allowed_mime_types = excluded.allowed_mime_types;
+ON CONFLICT (id) DO UPDATE
+SET public             = EXCLUDED.public,
+    file_size_limit    = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
 
--- Policies do bucket: arquivos vivem em {user_id}/...
-drop policy if exists "logos_public_read" on storage.objects;
-create policy "logos_public_read" on storage.objects
-  for select to public
-  using (bucket_id = 'logos');
 
-drop policy if exists "logos_user_insert" on storage.objects;
-create policy "logos_user_insert" on storage.objects
-  for insert to authenticated
-  with check (
-    bucket_id = 'logos'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+-- ---------------------------------------------------------------------
+-- Policies do bucket "logos"
+--
+-- Convenção de path usada pelo app: <auth.uid()>/logo-<timestamp>.<ext>
+-- A primeira pasta do path é o id do usuário, e é nela que travamos
+-- as permissões de escrita.
+-- ---------------------------------------------------------------------
 
-drop policy if exists "logos_user_update" on storage.objects;
-create policy "logos_user_update" on storage.objects
-  for update to authenticated
-  using (
-    bucket_id = 'logos'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+-- Limpa policies antigas (se existirem) para não duplicar
+DROP POLICY IF EXISTS "logos_public_read"          ON storage.objects;
+DROP POLICY IF EXISTS "logos_owner_insert"         ON storage.objects;
+DROP POLICY IF EXISTS "logos_owner_update"         ON storage.objects;
+DROP POLICY IF EXISTS "logos_owner_delete"         ON storage.objects;
 
-drop policy if exists "logos_user_delete" on storage.objects;
-create policy "logos_user_delete" on storage.objects
-  for delete to authenticated
-  using (
-    bucket_id = 'logos'
-    and auth.uid()::text = (storage.foldername(name))[1]
-  );
+-- SELECT: qualquer um pode visualizar (bucket público)
+CREATE POLICY "logos_public_read"
+ON storage.objects
+FOR SELECT
+USING (bucket_id = 'logos');
+
+-- INSERT: apenas usuário autenticado, dentro da própria pasta
+CREATE POLICY "logos_owner_insert"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'logos'
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+-- UPDATE: idem
+CREATE POLICY "logos_owner_update"
+ON storage.objects
+FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'logos'
+  AND auth.uid()::text = (storage.foldername(name))[1]
+)
+WITH CHECK (
+  bucket_id = 'logos'
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+-- DELETE: idem
+CREATE POLICY "logos_owner_delete"
+ON storage.objects
+FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'logos'
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
