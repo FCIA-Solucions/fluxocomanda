@@ -145,12 +145,12 @@ export default function Produtos() {
     if (!deleteTarget) return;
     const { error } = await supabase
       .from("products")
-      .update({ active: false })
+      .delete()
       .eq("id", deleteTarget.id);
     if (error) {
-      toast.error("Erro ao desativar");
+      toast.error("Erro ao excluir", { description: error.message });
     } else {
-      toast.success("Produto desativado");
+      toast.success("Produto excluído");
       fetchProducts();
     }
     setDeleteTarget(null);
@@ -259,18 +259,23 @@ export default function Produtos() {
         </SheetContent>
       </Sheet>
 
-      {/* Confirmação de desativar */}
+      {/* Confirmação de exclusão */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Desativar produto?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deleteTarget?.name}" não aparecerá mais para vendas. Você pode reativar depois.
+              "{deleteTarget?.name}" será removido permanentemente do seu cardápio. Vendas já registradas não serão afetadas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Desativar</AlertDialogAction>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
