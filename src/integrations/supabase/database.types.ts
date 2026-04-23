@@ -34,6 +34,12 @@ export interface Database {
         Update: { id?: string; user_id?: string; order_id?: string | null; total?: number; payment_method?: string | null; created_at?: string };
         Relationships: [];
       };
+      cash_closures: {
+        Row: { id: string; user_id: string; closed_at: string; business_day: string; type: "manual" | "auto"; closed_by_name: string | null; total: number; total_dinheiro: number; total_pix: number; total_cartao: number; sales_count: number; created_at: string };
+        Insert: { id?: string; user_id: string; closed_at?: string; business_day: string; type: "manual" | "auto"; closed_by_name?: string | null; total?: number; total_dinheiro?: number; total_pix?: number; total_cartao?: number; sales_count?: number; created_at?: string };
+        Update: { id?: string; user_id?: string; closed_at?: string; business_day?: string; type?: "manual" | "auto"; closed_by_name?: string | null; total?: number; total_dinheiro?: number; total_pix?: number; total_cartao?: number; sales_count?: number; created_at?: string };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
