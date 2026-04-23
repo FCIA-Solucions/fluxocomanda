@@ -56,6 +56,15 @@ interface ProductAgg {
   total: number;
 }
 
+interface ClosureRow {
+  id: string;
+  closed_at: string;
+  type: "manual" | "auto";
+  closed_by_name: string | null;
+  total: number;
+  sales_count: number;
+}
+
 const EMPTY_MSG = "Nenhuma comanda fechada neste período.";
 
 function topProducts(items: ItemRow[], limit = 10): ProductAgg[] {
