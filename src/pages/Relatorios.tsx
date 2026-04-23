@@ -56,6 +56,15 @@ interface ProductAgg {
   total: number;
 }
 
+interface ClosureRow {
+  id: string;
+  closed_at: string;
+  type: "manual" | "auto";
+  closed_by_name: string | null;
+  total: number;
+  sales_count: number;
+}
+
 const EMPTY_MSG = "Nenhuma comanda fechada neste período.";
 
 function topProducts(items: ItemRow[], limit = 10): ProductAgg[] {
@@ -105,6 +114,7 @@ function DailyReport({ businessName }: { businessName: string }) {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [closures, setClosures] = useState<ClosureRow[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -112,9 +122,23 @@ function DailyReport({ businessName }: { businessName: string }) {
     const [y, m, d] = date.split("-").map(Number);
     const start = new Date(y, m - 1, d, 0, 0, 0, 0);
     const end = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
-    const { orders, items } = await fetchClosedOrders(user.id, start.toISOString(), end.toISOString());
+    const [{ orders, items }, closuresRes] = await Promise.all([
+      fetchClosedOrders(user.id, start.toISOString(), end.toISOString()),
+      supabase
+        .from("cash_closures")
+        .select("id, closed_at, type, closed_by_name, total, sales_count")
+        .eq("user_id", user.id)
+        .eq("business_day", date)
+        .order("closed_at", { ascending: false }),
+    ]);
     setOrders(orders);
     setItems(items);
+    if (closuresRes.error) {
+      console.warn("cash_closures indisponível:", closuresRes.error.message);
+      setClosures([]);
+    } else {
+      setClosures((closuresRes.data ?? []) as ClosureRow[]);
+    }
     setLoading(false);
   }, [user, date]);
 
@@ -170,6 +194,18 @@ function DailyReport({ businessName }: { businessName: string }) {
           }),
           emptyMessage: EMPTY_MSG,
         },
+        {
+          title: "Fechamentos de Caixa",
+          head: ["Hora", "Tipo", "Responsável", "Vendas", "Total"],
+          rows: closures.map((c) => [
+            timeFmt.format(new Date(c.closed_at)),
+            c.type === "manual" ? "Manual" : "Automático",
+            c.closed_by_name ?? "—",
+            String(c.sales_count ?? 0),
+            fmtBRL(Number(c.total ?? 0)),
+          ]),
+          emptyMessage: "Nenhum fechamento de caixa neste dia.",
+        },
       ],
     });
   };
@@ -221,6 +257,39 @@ function DailyReport({ businessName }: { businessName: string }) {
                   </TableRow>
                 );
               })}
+            </TableBody>
+          </Table>
+        )}
+      </Section>
+
+      <Section title="Fechamentos de Caixa">
+        {loading ? <SkeletonRows /> : closures.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Nenhum fechamento de caixa neste dia.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Hora</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead className="text-right">Vendas</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {closures.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">{timeFmt.format(new Date(c.closed_at))}</TableCell>
+                  <TableCell>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "manual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {c.type === "manual" ? "Manual" : "Automático"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.closed_by_name ?? "—"}</TableCell>
+                  <TableCell className="text-right">{c.sales_count ?? 0}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(Number(c.total ?? 0))}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         )}
