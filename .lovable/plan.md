@@ -1,53 +1,42 @@
 
-## Status atual da implementação
+## Ajuste no envio de resumo via WhatsApp
 
-Boa notícia: a maior parte do que você pediu já está no código (do turno anterior). Vou só confirmar o que está pronto e listar os ajustes pequenos que faltam.
+### Arquivo
+`src/pages/ComandaDetalhe.tsx` — função `sendWhatsApp` (linhas 317–330)
 
-### Já implementado ✅
+### Mudança
+Detectar se o usuário está em mobile (Android/iPhone/iPad/iPod) e escolher o esquema de URL:
 
-| Item | Onde | Status |
-|---|---|---|
-| 1. Hook `useProfile()` com `role`, `ownerId`, `effectiveUserId` | `src/hooks/useProfile.tsx` | OK |
-| 2. Menu condicional (garçom vê só Comandas) | `src/components/BottomNav.tsx` | OK |
-| 3a. Botão "Cancelar item" oculto p/ garçom | `ComandaDetalhe.tsx` linha 417 | OK |
-| 3b. Comandas usa `effectiveUserId` (garçom vê dados do dono) | `Comandas.tsx`, `NovaComanda.tsx`, `ComandaDetalhe.tsx` | OK |
-| 3c. Garçom não tem acesso a Dashboard/Caixa/Relatórios (= não vê faturamento total do dia) | `App.tsx` rotas com `adminOnly` + redirect em `Index.tsx` | OK |
-| 4. Card "Modo Demonstração" só p/ admin em Meu Negócio | `MeuNegocio.tsx` linhas 279-305 | OK |
-| 5. Card "Equipe" com gate de upgrade só p/ admin | `MeuNegocio.tsx` linhas 236-276 | OK |
+- **Mobile** → `whatsapp://send?phone=55{numero}&text={mensagem}` (abre o app diretamente)
+- **Desktop** → `https://wa.me/55{numero}?text={mensagem}` (abre WhatsApp Web)
 
-### Ajustes pequenos a fazer
+`window.open(url, "_blank", "noopener,noreferrer")` continua igual.
 
-**A. Card "Equipe" — trocar redirect para WhatsApp (item 5 do briefing)**
-Hoje o botão "Fazer upgrade →" navega para `/assinatura`. O briefing pede um link WhatsApp pré-preenchido. Vou alterar para abrir:
+### Diff resumido
+
+```ts
+const sendWhatsApp = () => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) {
+    toast.error("Informe um WhatsApp válido");
+    return;
+  }
+  const fullNumber = digits.startsWith("55") ? digits : `55${digits}`;
+  const message = buildWhatsAppMessage();
+  const encoded = encodeURIComponent(message);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const url = isMobile
+    ? `whatsapp://send?phone=${fullNumber}&text=${encoded}`
+    : `https://wa.me/${fullNumber}?text=${encoded}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+  setCloseOpen(false);
+  setClosedSnapshot(null);
+  navigate(postSaleRedirect, { replace: true });
+};
 ```
-https://wa.me/5594999553574?text=Olá!+Quero+fazer+upgrade+do+FluxoComanda+para+adicionar+garçons.+Meu+email:+<email>
-```
-Usando `useAuth().user?.email` ou `useProfile().email` para preencher.
 
-**B. Card "Equipe" — enriquecer copy conforme briefing**
-Adicionar as linhas dos planos:
-- "Plano Padrão — até 3 garçons · R$ 49,90/mês"
-- "Plano Profissional — até 8 garçons · R$ 79,90/mês"
+### Resultado esperado
+- No celular do garçom → abre o app WhatsApp com a conversa pronta
+- No desktop → abre `web.whatsapp.com` (via `wa.me`) numa nova aba
 
-Botão muda para: `💬 Fazer upgrade via WhatsApp →`
-
-**C. "Aplicar desconto" — não existe**
-Procurei no código e não há funcionalidade de desconto em `ComandaDetalhe.tsx`. Não há botão para ocultar — nada a fazer aqui.
-
-**D. "Faturamento total do dia" para garçom — já protegido**
-Garçom não acessa Dashboard/Caixa/Relatórios (rotas `adminOnly`). Em `Comandas.tsx` só aparecem valores por comanda individual, não soma. Conforme.
-
-### Arquivos que serão editados
-
-- `src/pages/MeuNegocio.tsx` — apenas o bloco do card "Equipe" (linhas 236-276): trocar destino do botão e adicionar copy dos planos.
-
-### Teste manual após o ajuste (item 6 do briefing)
-
-Você vai rodar:
-1. Login com `garcom.demo@fluxocomanda.app` / `Demo@2026`
-2. Confirmar que o menu inferior mostra apenas "Comandas"
-3. Confirmar que as comandas do admin aparecem (depende da migration SQL `effective_owner` já estar aplicada no Supabase)
-4. Abrir uma comanda e confirmar que o ícone de lixeira (remover item) está oculto
-5. Logar de volta como admin → ir em "Negócio" → ver os dois cards (Demo + Equipe com botão WhatsApp)
-
-> ⚠️ Se a migration SQL ainda não foi rodada no Supabase, o garçom não verá nada. O SQL está em `docs/sql/20260423_add_roles_and_owner.sql` e foi compartilhado nas mensagens anteriores.
+Sem outras alterações de fluxo, layout ou mensagem.
