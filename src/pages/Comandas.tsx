@@ -105,21 +105,21 @@ export default function Comandas() {
                       {brl.format(Number(o.total))}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     <Button
                       variant="outline"
-                      className="h-11 flex-1"
+                      className="h-11 w-full"
                       onClick={() => navigate(`/comandas/${o.id}`)}
                     >
-                      Ver
+                      Ver comanda
                     </Button>
                     <Button
                       variant="destructive"
-                      className="h-11 flex-1"
+                      className="h-11 w-full"
                       disabled={closingId === o.id}
                       onClick={() => navigate(`/comandas/${o.id}?fechar=1`)}
                     >
-                      Fechar
+                      Fechar comanda
                     </Button>
                   </div>
                 </li>
