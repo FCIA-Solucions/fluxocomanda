@@ -262,6 +262,39 @@ function DailyReport({ businessName }: { businessName: string }) {
         )}
       </Section>
 
+      <Section title="Fechamentos de Caixa">
+        {loading ? <SkeletonRows /> : closures.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Nenhum fechamento de caixa neste dia.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Hora</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead className="text-right">Vendas</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {closures.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">{timeFmt.format(new Date(c.closed_at))}</TableCell>
+                  <TableCell>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "manual" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {c.type === "manual" ? "Manual" : "Automático"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{c.closed_by_name ?? "—"}</TableCell>
+                  <TableCell className="text-right">{c.sales_count ?? 0}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtBRL(Number(c.total ?? 0))}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Section>
+
       <Button onClick={handleExport} disabled={loading || orders.length === 0} className="h-14 w-full text-base font-semibold">
         <Download className="mr-2 h-5 w-5" /> Baixar PDF do Dia
       </Button>
