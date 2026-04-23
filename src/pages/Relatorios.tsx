@@ -114,6 +114,7 @@ function DailyReport({ businessName }: { businessName: string }) {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [closures, setClosures] = useState<ClosureRow[]>([]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -121,9 +122,23 @@ function DailyReport({ businessName }: { businessName: string }) {
     const [y, m, d] = date.split("-").map(Number);
     const start = new Date(y, m - 1, d, 0, 0, 0, 0);
     const end = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
-    const { orders, items } = await fetchClosedOrders(user.id, start.toISOString(), end.toISOString());
+    const [{ orders, items }, closuresRes] = await Promise.all([
+      fetchClosedOrders(user.id, start.toISOString(), end.toISOString()),
+      supabase
+        .from("cash_closures")
+        .select("id, closed_at, type, closed_by_name, total, sales_count")
+        .eq("user_id", user.id)
+        .eq("business_day", date)
+        .order("closed_at", { ascending: false }),
+    ]);
     setOrders(orders);
     setItems(items);
+    if (closuresRes.error) {
+      console.warn("cash_closures indisponível:", closuresRes.error.message);
+      setClosures([]);
+    } else {
+      setClosures((closuresRes.data ?? []) as ClosureRow[]);
+    }
     setLoading(false);
   }, [user, date]);
 
