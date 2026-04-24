@@ -236,6 +236,7 @@ export default function Auth() {
             </TabsContent>
           </Tabs>
 
+          {/* Login com Google ocultado temporariamente — manter código para reativar depois.
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
@@ -267,6 +268,7 @@ export default function Auth() {
               </>
             )}
           </Button>
+          */}
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-1 text-center">
