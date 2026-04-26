@@ -1,6 +1,14 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -87,9 +95,16 @@ export default function ComandaDetalhe() {
     customerName: string | null;
   } | null>(null);
 
+  // Guardar venda
+  const [guardarOpen, setGuardarOpen] = useState(false);
+  const [guardarNome, setGuardarNome] = useState("");
+  const [guardarObs, setGuardarObs] = useState("");
+  const [guardando, setGuardando] = useState(false);
+
   const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
+  const isGuardada = order?.status === "guardada";
 
   const total = useMemo(
     () => items.reduce((acc, i) => acc + Number(i.subtotal ?? 0), 0),
@@ -339,6 +354,42 @@ export default function ComandaDetalhe() {
     navigate(postSaleRedirect, { replace: true });
   };
 
+  const openGuardar = () => {
+    if (items.length === 0) {
+      toast.error("Adicione ao menos 1 item");
+      return;
+    }
+    setGuardarNome(order?.customer_name ?? "");
+    setGuardarObs("");
+    setGuardarOpen(true);
+  };
+
+  const confirmGuardar = async () => {
+    if (!order || !id) return;
+    const nome = guardarNome.trim();
+    if (!nome) {
+      toast.error("Informe o nome do cliente");
+      return;
+    }
+    setGuardando(true);
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: "guardada",
+        guardada_em: new Date().toISOString(),
+        guardada_obs: guardarObs.trim() || null,
+        customer_name: nome,
+      })
+      .eq("id", id);
+    setGuardando(false);
+    if (error) {
+      toast.error(error.message || "Erro ao guardar venda");
+      return;
+    }
+    toast.success("✅ Venda guardada");
+    navigate(postSaleRedirect, { replace: true });
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -363,8 +414,8 @@ export default function ComandaDetalhe() {
 
         <header className="mb-4 flex items-start justify-between gap-3">
           <h1 className="text-2xl font-bold text-foreground">{order.customer_name || "Sem nome"}</h1>
-          <Badge variant={isClosed ? "secondary" : "default"}>
-            {isClosed ? "Fechada" : "Aberta"}
+          <Badge variant={isClosed ? "secondary" : isGuardada ? "outline" : "default"}>
+            {isClosed ? "Fechada" : isGuardada ? "Guardada" : "Aberta"}
           </Badge>
         </header>
 
@@ -477,16 +528,24 @@ export default function ComandaDetalhe() {
         )}
       </div>
 
-      {/* Botão fixo Fechar Comanda */}
+      {/* Botões fixos: Guardar / Fechar */}
       {!isClosed && items.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-border bg-background px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
+            <Button
+              onClick={openGuardar}
+              variant="outline"
+              className="h-16 w-full text-sm font-semibold"
+            >
+              <Bookmark className="h-5 w-5" />
+              {isGuardada ? "Atualizar" : "Guardar"}
+            </Button>
             <Button
               onClick={openCloseSheet}
               variant="destructive"
-              className="h-16 w-full text-base font-semibold"
+              className="h-16 w-full text-sm font-semibold"
             >
-              Fechar Comanda →
+              {isGuardada ? "Receber →" : "Fechar →"}
             </Button>
           </div>
         </div>
@@ -594,6 +653,53 @@ export default function ComandaDetalhe() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Dialog Guardar Venda */}
+      <Dialog open={guardarOpen} onOpenChange={setGuardarOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Guardar venda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label htmlFor="g-nome" className="text-sm font-medium text-foreground">
+                Nome do cliente *
+              </label>
+              <Input
+                id="g-nome"
+                value={guardarNome}
+                onChange={(e) => setGuardarNome(e.target.value)}
+                placeholder="Ex: João da Silva"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="g-obs" className="text-sm font-medium text-foreground">
+                Observação (opcional)
+              </label>
+              <Textarea
+                id="g-obs"
+                value={guardarObs}
+                onChange={(e) => setGuardarObs(e.target.value)}
+                placeholder="Ex: pagar na sexta-feira"
+                rows={3}
+              />
+            </div>
+            <p className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
+              A comanda ficará pendente até você receber o pagamento. Total atual:{" "}
+              <span className="font-semibold text-foreground">{brl.format(total)}</span>
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setGuardarOpen(false)} disabled={guardando}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmGuardar} disabled={guardando}>
+              {guardando ? "Salvando..." : "Guardar venda"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
