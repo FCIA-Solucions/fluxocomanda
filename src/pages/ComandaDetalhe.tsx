@@ -354,6 +354,42 @@ export default function ComandaDetalhe() {
     navigate(postSaleRedirect, { replace: true });
   };
 
+  const openGuardar = () => {
+    if (items.length === 0) {
+      toast.error("Adicione ao menos 1 item");
+      return;
+    }
+    setGuardarNome(order?.customer_name ?? "");
+    setGuardarObs("");
+    setGuardarOpen(true);
+  };
+
+  const confirmGuardar = async () => {
+    if (!order || !id) return;
+    const nome = guardarNome.trim();
+    if (!nome) {
+      toast.error("Informe o nome do cliente");
+      return;
+    }
+    setGuardando(true);
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        status: "guardada",
+        guardada_em: new Date().toISOString(),
+        guardada_obs: guardarObs.trim() || null,
+        customer_name: nome,
+      })
+      .eq("id", id);
+    setGuardando(false);
+    if (error) {
+      toast.error(error.message || "Erro ao guardar venda");
+      return;
+    }
+    toast.success("✅ Venda guardada");
+    navigate(postSaleRedirect, { replace: true });
+  };
+
   if (loading) {
     return (
       <AppShell>
