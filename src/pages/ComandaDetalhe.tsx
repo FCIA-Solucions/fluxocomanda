@@ -147,7 +147,7 @@ export default function ComandaDetalhe() {
         .order("id", { ascending: true }),
       supabase
         .from("products")
-        .select("id, name, price")
+        .select("id, name, price, categoria")
         .eq("user_id", effectiveUserId)
         .eq("active", true)
         .order("name", { ascending: true }),
@@ -159,7 +159,14 @@ export default function ComandaDetalhe() {
     }
     setOrder(orderRes.data as Order);
     setItems((itemsRes.data ?? []) as OrderItem[]);
-    setProducts((productsRes.data ?? []) as Product[]);
+    setProducts(
+      (productsRes.data ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        categoria: normalizeCategoria(p.categoria),
+      }))
+    );
     setLoading(false);
   }, [user, id, navigate, effectiveUserId]);
 
