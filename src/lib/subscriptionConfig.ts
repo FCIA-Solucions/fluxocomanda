@@ -1,6 +1,4 @@
-// Configurações de assinatura — leem do build env (VITE_*) com fallback.
-// Para personalizar, adicione em Workspace Settings → Build Secrets:
-//   VITE_PIX_KEY, VITE_WHATSAPP_NUMBER, VITE_WHATSAPP_MESSAGE, VITE_ADMIN_EMAIL
+﻿// Configuracoes de assinatura - leem do build env (VITE_*) com fallback.
 export const SUBSCRIPTION_PRICE_BRL = 39;
 
 export const PIX_KEY =
@@ -13,9 +11,8 @@ export const WHATSAPP_NUMBER =
 
 export const WHATSAPP_MESSAGE =
   (import.meta.env.VITE_WHATSAPP_MESSAGE as string | undefined) ??
-  "Olá! Quero renovar minha assinatura do FluxoComanda.";
+  "Ola! Quero renovar minha assinatura do FluxoComanda.";
 
-/** E-mail do dono / admin que nunca é bloqueado pela tela de assinatura. */
 export const ADMIN_EMAIL =
   (import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ??
   "blindadoemotivado@gmail.com";
