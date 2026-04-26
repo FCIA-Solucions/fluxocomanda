@@ -653,6 +653,53 @@ export default function ComandaDetalhe() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Dialog Guardar Venda */}
+      <Dialog open={guardarOpen} onOpenChange={setGuardarOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Guardar venda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label htmlFor="g-nome" className="text-sm font-medium text-foreground">
+                Nome do cliente *
+              </label>
+              <Input
+                id="g-nome"
+                value={guardarNome}
+                onChange={(e) => setGuardarNome(e.target.value)}
+                placeholder="Ex: João da Silva"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="g-obs" className="text-sm font-medium text-foreground">
+                Observação (opcional)
+              </label>
+              <Textarea
+                id="g-obs"
+                value={guardarObs}
+                onChange={(e) => setGuardarObs(e.target.value)}
+                placeholder="Ex: pagar na sexta-feira"
+                rows={3}
+              />
+            </div>
+            <p className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
+              A comanda ficará pendente até você receber o pagamento. Total atual:{" "}
+              <span className="font-semibold text-foreground">{brl.format(total)}</span>
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setGuardarOpen(false)} disabled={guardando}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmGuardar} disabled={guardando}>
+              {guardando ? "Salvando..." : "Guardar venda"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
