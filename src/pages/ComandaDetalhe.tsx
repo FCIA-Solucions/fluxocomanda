@@ -148,6 +148,48 @@ export default function ComandaDetalhe() {
     load();
   }, [load]);
 
+  // Refetch products when the tab/window regains focus or becomes visible
+  // (e.g. user volta da tela Produtos após cadastrar um novo item)
+  const refetchProducts = useCallback(async () => {
+    if (!effectiveUserId) return;
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, price")
+      .eq("user_id", effectiveUserId)
+      .eq("active", true)
+      .order("name", { ascending: true });
+    if (!error) setProducts((data ?? []) as Product[]);
+  }, [effectiveUserId]);
+
+  useEffect(() => {
+    const onFocus = () => refetchProducts();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refetchProducts();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refetchProducts]);
+
+  // Realtime: novos produtos cadastrados aparecem instantaneamente no cardápio
+  useEffect(() => {
+    if (!effectiveUserId) return;
+    const channel = supabase
+      .channel(`products-${effectiveUserId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products", filter: `user_id=eq.${effectiveUserId}` },
+        () => refetchProducts()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [effectiveUserId, refetchProducts]);
+
   // Abre sheet de fechamento via ?fechar=1
   useEffect(() => {
     if (!loading && order && !isClosed && searchParams.get("fechar") === "1" && items.length > 0) {
