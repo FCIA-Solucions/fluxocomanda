@@ -414,8 +414,8 @@ export default function ComandaDetalhe() {
 
         <header className="mb-4 flex items-start justify-between gap-3">
           <h1 className="text-2xl font-bold text-foreground">{order.customer_name || "Sem nome"}</h1>
-          <Badge variant={isClosed ? "secondary" : "default"}>
-            {isClosed ? "Fechada" : "Aberta"}
+          <Badge variant={isClosed ? "secondary" : isGuardada ? "outline" : "default"}>
+            {isClosed ? "Fechada" : isGuardada ? "Guardada" : "Aberta"}
           </Badge>
         </header>
 
