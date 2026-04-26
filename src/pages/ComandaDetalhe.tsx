@@ -1,6 +1,14 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
