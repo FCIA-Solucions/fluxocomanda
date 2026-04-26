@@ -146,8 +146,8 @@ const Status = () => {
                   </div>
                 </div>
 
-                <Button asChild variant="outline" className="w-full">
-                  <button onClick={() => sub.refresh()}>Atualizar dados</button>
+                <Button variant="outline" className="w-full" onClick={() => sub.refresh()}>
+                  Atualizar dados
                 </Button>
               </>
             )}
