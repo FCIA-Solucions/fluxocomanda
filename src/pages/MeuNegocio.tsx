@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,15 +93,19 @@ export default function MeuNegocio() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Voltar" className="min-h-touch min-w-touch">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Meu Negócio</h1>
-          <p className="text-sm text-muted-foreground">Personalize a identidade do seu app</p>
-        </div>
-      </header>
+      <PageHeader
+        left={
+          <>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Voltar" className="min-h-touch min-w-touch shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="min-w-0">
+              <p className="truncate text-xs text-muted-foreground">Personalize o app</p>
+              <h1 className="truncate text-2xl font-bold text-foreground">Meu Negócio</h1>
+            </div>
+          </>
+        }
+      />
 
       {loading ? (
         <div className="space-y-4">

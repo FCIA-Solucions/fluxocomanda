@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InstallBanner } from "@/components/InstallBanner";
@@ -98,23 +99,27 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-start gap-3 pr-12">
-        <div className="flex items-center gap-3">
-          {business.logo_url && (
-            <img
-              src={business.logo_url}
-              alt={business.business_name ?? "Logo"}
-              className="h-12 w-12 rounded-xl bg-card object-cover"
-            />
-          )}
-          <div>
-            <p className="text-sm text-muted-foreground">Olá, {name || "..."} 👋</p>
-            <h1 className="text-2xl font-bold text-foreground">
-              {business.business_name?.trim() || "FluxoComanda"}
-            </h1>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        left={
+          <>
+            {business.logo_url && (
+              <img
+                src={business.logo_url}
+                alt={business.business_name ?? "Logo"}
+                className="h-12 w-12 shrink-0 rounded-xl bg-card object-cover"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-xs text-muted-foreground">
+                Olá, {name || "..."} 👋
+              </p>
+              <h1 className="truncate text-xl font-bold leading-tight text-foreground">
+                {business.business_name?.trim() || "FluxoComanda"}
+              </h1>
+            </div>
+          </>
+        }
+      />
 
       <SubscriptionBanner />
       <InstallBanner />

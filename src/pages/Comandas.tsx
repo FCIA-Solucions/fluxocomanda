@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Banknote, Smartphone, CreditCard, Clock, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -165,7 +166,7 @@ export default function Comandas() {
 
   return (
     <AppShell>
-      <h1 className="mb-4 text-2xl font-bold text-foreground">Comandas</h1>
+      <PageHeader title="Comandas" />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList className="grid w-full grid-cols-3">

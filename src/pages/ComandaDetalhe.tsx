@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -502,12 +503,16 @@ export default function ComandaDetalhe() {
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
 
-        <header className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold text-foreground">{order.customer_name || "Sem nome"}</h1>
-          <Badge variant={isClosed ? "secondary" : isGuardada ? "outline" : "default"}>
-            {isClosed ? "Fechada" : isGuardada ? "Guardada" : "Aberta"}
-          </Badge>
-        </header>
+        <PageHeader
+          left={
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-2xl font-bold text-foreground">{order.customer_name || "Sem nome"}</h1>
+              <Badge variant={isClosed ? "secondary" : isGuardada ? "outline" : "default"} className="shrink-0">
+                {isClosed ? "Fechada" : isGuardada ? "Guardada" : "Aberta"}
+              </Badge>
+            </div>
+          }
+        />
 
         <div className="mb-6 rounded-2xl bg-card p-5 text-center">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Total</p>

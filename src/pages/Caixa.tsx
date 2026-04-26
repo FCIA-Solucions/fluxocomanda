@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Banknote, Smartphone, CreditCard, DollarSign, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -177,18 +178,22 @@ export default function Caixa() {
 
   return (
     <AppShell>
-      <header className="mb-5 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Caixa do Dia</h1>
-          <p className="mt-1 text-sm capitalize text-muted-foreground">{dataFmt}</p>
-        </div>
-        {isClosed && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            <Lock className="h-3 w-3" />
-            Caixa Fechado
-          </span>
-        )}
-      </header>
+      <PageHeader
+        left={
+          <div className="min-w-0">
+            <p className="truncate text-xs capitalize text-muted-foreground">{dataFmt}</p>
+            <h1 className="truncate text-2xl font-bold text-foreground">Caixa do Dia</h1>
+          </div>
+        }
+        actions={
+          isClosed ? (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Fechado
+            </span>
+          ) : undefined
+        }
+      />
 
       {/* Total do dia (destaque) */}
       <div className="mb-3 rounded-2xl bg-card p-5">
