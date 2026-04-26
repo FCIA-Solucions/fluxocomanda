@@ -688,18 +688,20 @@ export default function Relatorios() {
 
   return (
     <AppShell>
-      <header className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Voltar" className="min-h-touch min-w-touch">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Relatórios</h1>
-            <p className="text-sm text-muted-foreground">Diário, mensal e anual com export em PDF</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        left={
+          <>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Voltar" className="min-h-touch min-w-touch shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <FileText className="h-6 w-6 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <p className="truncate text-xs text-muted-foreground">Diário, mensal e anual</p>
+              <h1 className="truncate text-2xl font-bold text-foreground">Relatórios</h1>
+            </div>
+          </>
+        }
+      />
 
       <div className="mb-4">
         <PendenciasPanel />

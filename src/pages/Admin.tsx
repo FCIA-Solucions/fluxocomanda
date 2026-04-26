@@ -224,15 +224,17 @@ export default function Admin() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24">
-        <div className="flex items-center gap-3">
-          <Shield className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Painel Admin FCIA</h1>
-            <p className="text-sm text-muted-foreground">
-              Gerenciar clientes e assinaturas
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          left={
+            <>
+              <Shield className="h-6 w-6 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="truncate text-xs text-muted-foreground">Gerenciar clientes e assinaturas</p>
+                <h1 className="truncate text-2xl font-bold">Painel Admin FCIA</h1>
+              </div>
+            </>
+          }
+        />
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

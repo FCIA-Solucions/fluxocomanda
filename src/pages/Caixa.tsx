@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Banknote, Smartphone, CreditCard, DollarSign, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

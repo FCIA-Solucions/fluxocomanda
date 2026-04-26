@@ -123,7 +123,7 @@ export default function NovaComanda() {
       >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
-      <h1 className="mb-6 text-2xl font-bold text-foreground">Nova comanda</h1>
+      <PageHeader title="Nova comanda" />
 
       <div className="space-y-4">
         <div className="space-y-2">

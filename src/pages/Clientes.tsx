@@ -168,14 +168,16 @@ export default function Clientes() {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <header className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            {list.length} {list.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        left={
+          <div className="min-w-0">
+            <p className="truncate text-xs text-muted-foreground">
+              {list.length} {list.length === 1 ? "cliente cadastrado" : "clientes cadastrados"}
+            </p>
+            <h1 className="truncate text-2xl font-bold text-foreground">Clientes</h1>
+          </div>
+        }
+      />
 
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
