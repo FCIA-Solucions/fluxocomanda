@@ -17,9 +17,9 @@ export interface Database {
         Relationships: [];
       };
       orders: {
-        Row: { id: string; user_id: string; customer_name: string | null; status: string; total: number; payment_method: string | null; created_at: string; closed_at: string | null };
-        Insert: { id?: string; user_id: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null };
-        Update: { id?: string; user_id?: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null };
+        Row: { id: string; user_id: string; customer_name: string | null; status: string; total: number; payment_method: string | null; created_at: string; closed_at: string | null; guardada_em: string | null; guardada_obs: string | null };
+        Insert: { id?: string; user_id: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
+        Update: { id?: string; user_id?: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
         Relationships: [];
       };
       order_items: {
