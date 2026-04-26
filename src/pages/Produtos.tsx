@@ -81,16 +81,31 @@ export default function Produtos() {
   const fetchProducts = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+
+    // Tenta buscar com a coluna 'categoria'. Se ela ainda não existir no banco,
+    // faz fallback para a query antiga (sem categoria) para a tela continuar funcionando.
+    let { data, error } = await supabase
       .from("products")
       .select("id, name, price, active, categoria")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
+
+    if (error && /categoria/i.test(error.message)) {
+      const fallback = await supabase
+        .from("products")
+        .select("id, name, price, active")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      data = fallback.data as typeof data;
+      error = fallback.error;
+    }
+
     if (error) {
-      toast.error("Erro ao carregar produtos");
+      console.error("[Produtos] erro ao carregar:", error);
+      toast.error("Erro ao carregar produtos", { description: error.message });
     } else {
       setProducts(
-        (data ?? []).map((p) => ({
+        (data ?? []).map((p: { id: string; name: string; price: number; active: boolean; categoria?: unknown }) => ({
           id: p.id,
           name: p.name,
           price: p.price,
@@ -136,21 +151,32 @@ export default function Produtos() {
     const price = cents / 100;
     setSaving(true);
     if (editing) {
-      const { error } = await supabase
+      let { error } = await supabase
         .from("products")
         .update({ name: name.trim(), price, categoria })
         .eq("id", editing.id);
-      if (error) toast.error("Erro ao salvar");
+      if (error && /categoria/i.test(error.message)) {
+        ({ error } = await supabase
+          .from("products")
+          .update({ name: name.trim(), price })
+          .eq("id", editing.id));
+      }
+      if (error) toast.error("Erro ao salvar", { description: error.message });
       else {
         toast.success("Produto atualizado");
         setSheetOpen(false);
         fetchProducts();
       }
     } else {
-      const { error } = await supabase
+      let { error } = await supabase
         .from("products")
         .insert({ user_id: user.id, name: name.trim(), price, active: true, categoria });
-      if (error) toast.error("Erro ao criar");
+      if (error && /categoria/i.test(error.message)) {
+        ({ error } = await supabase
+          .from("products")
+          .insert({ user_id: user.id, name: name.trim(), price, active: true }));
+      }
+      if (error) toast.error("Erro ao criar", { description: error.message });
       else {
         toast.success("Produto criado");
         setSheetOpen(false);
