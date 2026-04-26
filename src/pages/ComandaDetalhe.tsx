@@ -61,10 +61,26 @@ interface OrderItem {
   subtotal: number;
 }
 
+type Categoria = "bebidas" | "comidas" | "outros";
+
+const CATEGORIA_LABEL: Record<Categoria, string> = {
+  bebidas: "Bebidas",
+  comidas: "Comidas",
+  outros: "Outros",
+};
+
+const normalizeCategoria = (v: unknown): Categoria => {
+  const s = String(v ?? "").toLowerCase().trim();
+  if (s === "bebidas" || s === "bebida") return "bebidas";
+  if (s === "comidas" || s === "comida") return "comidas";
+  return "outros";
+};
+
 interface Product {
   id: string;
   name: string;
   price: number;
+  categoria: Categoria;
 }
 
 type PaymentMethod = "dinheiro" | "pix" | "cartao";
