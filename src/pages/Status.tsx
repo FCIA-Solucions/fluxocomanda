@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, XCircle, Clock, Shield, Mail, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ADMIN_EMAIL } from "@/lib/subscriptionConfig";
 import { Button } from "@/components/ui/button";
