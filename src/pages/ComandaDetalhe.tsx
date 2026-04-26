@@ -95,9 +95,16 @@ export default function ComandaDetalhe() {
     customerName: string | null;
   } | null>(null);
 
+  // Guardar venda
+  const [guardarOpen, setGuardarOpen] = useState(false);
+  const [guardarNome, setGuardarNome] = useState("");
+  const [guardarObs, setGuardarObs] = useState("");
+  const [guardando, setGuardando] = useState(false);
+
   const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
+  const isGuardada = order?.status === "guardada";
 
   const total = useMemo(
     () => items.reduce((acc, i) => acc + Number(i.subtotal ?? 0), 0),
