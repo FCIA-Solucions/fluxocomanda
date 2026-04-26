@@ -58,9 +58,9 @@ const Status = () => {
           <CardContent className="space-y-3">
             <div className="flex items-start gap-3">
               {isAdmin ? (
-                <CheckCircle2 className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-400" />
+                <CheckCircle2 className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-500" />
               ) : (
-                <XCircle className="mt-0.5 h-6 w-6 flex-shrink-0 text-yellow-400" />
+                <XCircle className="mt-0.5 h-6 w-6 flex-shrink-0 text-yellow-500" />
               )}
               <div className="flex-1">
                 <p className="font-semibold">
