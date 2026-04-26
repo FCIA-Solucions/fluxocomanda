@@ -528,16 +528,24 @@ export default function ComandaDetalhe() {
         )}
       </div>
 
-      {/* Botão fixo Fechar Comanda */}
+      {/* Botões fixos: Guardar / Fechar */}
       {!isClosed && items.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-border bg-background px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
+            <Button
+              onClick={openGuardar}
+              variant="outline"
+              className="h-16 w-full text-sm font-semibold"
+            >
+              <Bookmark className="h-5 w-5" />
+              {isGuardada ? "Atualizar" : "Guardar"}
+            </Button>
             <Button
               onClick={openCloseSheet}
               variant="destructive"
-              className="h-16 w-full text-base font-semibold"
+              className="h-16 w-full text-sm font-semibold"
             >
-              Fechar Comanda →
+              {isGuardada ? "Receber →" : "Fechar →"}
             </Button>
           </div>
         </div>
