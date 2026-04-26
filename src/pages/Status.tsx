@@ -21,19 +21,28 @@ function fmtDate(d: Date | null) {
 
 const Status = () => {
   const { user } = useAuth();
+  const profile = useProfile();
   const sub = useSubscription();
 
   const userEmail = user?.email ?? "—";
-  const isAdmin =
+  const isAdminEmail =
     !!ADMIN_EMAIL &&
     !!user?.email &&
-    user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-  const statusLabel = sub.status === "trial" ? "Trial" : sub.status === "active" ? "Ativa" : "Vencida";
+    user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase();
+  const isSuperadmin = profile.role === "superadmin";
+  const isAdmin = isAdminEmail || isSuperadmin;
+  const effectiveStatus = sub.isBlocked ? sub.status : "active";
+  const statusLabel = sub.isBlocked
+    ? sub.status === "trial"
+      ? "Trial"
+      : sub.status === "active"
+        ? "Ativa"
+        : "Vencida"
+    : "Liberada";
   const statusColor =
-    sub.status === "active"
+    effectiveStatus === "active"
       ? "bg-green-500/15 text-green-300 border-green-500/30"
-      : sub.status === "trial"
+      : effectiveStatus === "trial"
         ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
         : "bg-red-500/15 text-red-300 border-red-500/30";
 
