@@ -44,7 +44,9 @@ export default function Dashboard() {
       .maybeSingle()
       .then((res) => {
         const data = res.data as { name: string | null } | null;
-        setName(data?.name ?? user.email?.split("@")[0] ?? "");
+        const fullName = data?.name ?? user.email?.split("@")[0] ?? "";
+        const firstName = fullName.trim().split(/\s+/)[0] ?? "";
+        setName(firstName);
       });
   }, [user]);
 
