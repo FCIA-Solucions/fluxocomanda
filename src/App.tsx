@@ -25,6 +25,7 @@ import Relatorios from "./pages/Relatorios.tsx";
 import Assinatura from "./pages/Assinatura.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Instalar from "./pages/Instalar.tsx";
+import Clientes from "./pages/Clientes.tsx";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
                   <Route path="/produtos" element={<ProtectedRoute adminOnly><Produtos /></ProtectedRoute>} />
                   <Route path="/caixa" element={<ProtectedRoute adminOnly><Caixa /></ProtectedRoute>} />
                   <Route path="/meu-negocio" element={<ProtectedRoute adminOnly><MeuNegocio /></ProtectedRoute>} />
+                  <Route path="/clientes" element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
                   <Route path="/relatorios" element={<ProtectedRoute adminOnly><Relatorios /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

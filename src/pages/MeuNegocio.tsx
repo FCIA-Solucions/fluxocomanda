@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -213,6 +213,24 @@ export default function MeuNegocio() {
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar"}
           </Button>
+
+          {/* Clientes */}
+          <button
+            type="button"
+            onClick={() => navigate("/clientes")}
+            className="flex w-full items-center justify-between rounded-2xl bg-card p-4 text-left transition-colors hover:bg-card/80"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <UserCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Clientes</p>
+                <p className="text-xs text-muted-foreground">Cadastre e gerencie seus clientes</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </button>
 
           {/* Relatórios */}
           <button
