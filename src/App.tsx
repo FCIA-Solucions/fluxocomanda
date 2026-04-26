@@ -26,6 +26,7 @@ import Assinatura from "./pages/Assinatura.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Instalar from "./pages/Instalar.tsx";
 import Clientes from "./pages/Clientes.tsx";
+import Admin from "./pages/Admin.tsx";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => {
                   <Route path="/meu-negocio" element={<ProtectedRoute adminOnly><MeuNegocio /></ProtectedRoute>} />
                   <Route path="/clientes" element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
                   <Route path="/relatorios" element={<ProtectedRoute adminOnly><Relatorios /></ProtectedRoute>} />
+                  <Route path="/admin" element={<AuthOnlyRoute><Admin /></AuthOnlyRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BusinessProvider>
