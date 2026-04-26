@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Instalar from "./pages/Instalar.tsx";
 import Clientes from "./pages/Clientes.tsx";
 import Admin from "./pages/Admin.tsx";
+import Status from "./pages/Status.tsx";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => {
                   <Route path="/clientes" element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
                   <Route path="/relatorios" element={<ProtectedRoute adminOnly><Relatorios /></ProtectedRoute>} />
                   <Route path="/admin" element={<AuthOnlyRoute><Admin /></AuthOnlyRoute>} />
+                  <Route path="/status" element={<AuthOnlyRoute><Status /></AuthOnlyRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BusinessProvider>
