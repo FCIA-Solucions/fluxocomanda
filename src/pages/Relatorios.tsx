@@ -601,6 +601,86 @@ function SkeletonRows() {
   );
 }
 
+function PendenciasPanel() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [oldestDays, setOldestDays] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("total, guardada_em")
+        .eq("user_id", user.id)
+        .eq("status", "guardada");
+      if (!active) return;
+      if (error) {
+        setLoading(false);
+        return;
+      }
+      const rows = (data ?? []) as { total: number; guardada_em: string | null }[];
+      setCount(rows.length);
+      setTotal(rows.reduce((acc, r) => acc + Number(r.total ?? 0), 0));
+      const oldest = rows
+        .map((r) => (r.guardada_em ? new Date(r.guardada_em).getTime() : null))
+        .filter((v): v is number => v !== null)
+        .sort((a, b) => a - b)[0];
+      setOldestDays(
+        oldest ? Math.max(0, Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24))) : null
+      );
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  if (loading) {
+    return <div className="h-24 animate-pulse rounded-2xl bg-card" />;
+  }
+  if (count === 0) return null;
+
+  return (
+    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-primary">
+          Pendências
+        </h2>
+        <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+          {count}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            Total em aberto
+          </p>
+          <p className="mt-1 text-2xl font-bold text-primary">{fmtBRL(total)}</p>
+        </div>
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            Mais antiga
+          </p>
+          <p className="mt-1 text-2xl font-bold text-foreground">
+            {oldestDays === null
+              ? "—"
+              : oldestDays === 0
+                ? "hoje"
+                : oldestDays === 1
+                  ? "1 dia"
+                  : `${oldestDays} dias`}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Relatorios() {
   const navigate = useNavigate();
   const { business } = useBusiness();
@@ -620,6 +700,10 @@ export default function Relatorios() {
           </div>
         </div>
       </header>
+
+      <div className="mb-4">
+        <PendenciasPanel />
+      </div>
 
       <Tabs defaultValue="diario" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
