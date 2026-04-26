@@ -97,7 +97,7 @@ const Status = () => {
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <Shield className="h-4 w-4" /> Role no banco
                 </span>
-                <span className="font-mono text-xs break-all text-right">{ADMIN_EMAIL || "—"}</span>
+                <span className="font-mono text-xs break-all text-right">{profile.role}</span>
               </div>
             </div>
           </CardContent>
