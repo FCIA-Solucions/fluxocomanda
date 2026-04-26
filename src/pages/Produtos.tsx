@@ -151,21 +151,32 @@ export default function Produtos() {
     const price = cents / 100;
     setSaving(true);
     if (editing) {
-      const { error } = await supabase
+      let { error } = await supabase
         .from("products")
         .update({ name: name.trim(), price, categoria })
         .eq("id", editing.id);
-      if (error) toast.error("Erro ao salvar");
+      if (error && /categoria/i.test(error.message)) {
+        ({ error } = await supabase
+          .from("products")
+          .update({ name: name.trim(), price })
+          .eq("id", editing.id));
+      }
+      if (error) toast.error("Erro ao salvar", { description: error.message });
       else {
         toast.success("Produto atualizado");
         setSheetOpen(false);
         fetchProducts();
       }
     } else {
-      const { error } = await supabase
+      let { error } = await supabase
         .from("products")
         .insert({ user_id: user.id, name: name.trim(), price, active: true, categoria });
-      if (error) toast.error("Erro ao criar");
+      if (error && /categoria/i.test(error.message)) {
+        ({ error } = await supabase
+          .from("products")
+          .insert({ user_id: user.id, name: name.trim(), price, active: true }));
+      }
+      if (error) toast.error("Erro ao criar", { description: error.message });
       else {
         toast.success("Produto criado");
         setSheetOpen(false);
