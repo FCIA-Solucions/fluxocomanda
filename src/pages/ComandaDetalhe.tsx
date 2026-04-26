@@ -47,6 +47,7 @@ interface Order {
   id: string;
   user_id: string;
   customer_name: string | null;
+  customer_id: string | null;
   status: string;
   total: number;
   payment_method: string | null;
@@ -136,7 +137,7 @@ export default function ComandaDetalhe() {
     const [orderRes, itemsRes, productsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, user_id, customer_name, status, total, payment_method")
+        .select("id, user_id, customer_name, customer_id, status, total, payment_method")
         .eq("id", id)
         .eq("user_id", effectiveUserId)
         .maybeSingle(),
