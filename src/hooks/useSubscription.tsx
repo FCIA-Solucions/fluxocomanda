@@ -70,7 +70,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     setState((s) => ({ ...s, loading: true }));
     const { data } = await supabase
       .from("profiles")
-      .select("subscription_status, subscription_expires_at, trial_ends_at")
+      .select("subscription_status, subscription_expires_at, trial_ends_at, role")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -79,9 +79,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const hasAnyField = !!(data?.subscription_status || trialEndsAt || subExpires);
     const computed = computeStatus(trialEndsAt, subExpires, hasAnyField);
 
-    // Bypass para o dono / admin definido em VITE_ADMIN_EMAIL
-    const isAdmin =
-      !!ADMIN_EMAIL && !!user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    // Bypass: e-mail admin OU role superadmin no banco
+    const userEmail = user.email?.trim().toLowerCase() ?? "";
+    const adminEmail = ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+    const isAdminEmail = !!adminEmail && userEmail === adminEmail;
+    const isSuperadmin = (data as { role?: string } | null)?.role === "superadmin";
+    const isAdmin = isAdminEmail || isSuperadmin;
     const isBlocked = !isAdmin && computed.status === "expired";
 
     setState({
