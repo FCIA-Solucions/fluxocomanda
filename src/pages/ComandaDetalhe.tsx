@@ -180,11 +180,19 @@ export default function ComandaDetalhe() {
     if (!effectiveUserId) return;
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, categoria")
       .eq("user_id", effectiveUserId)
       .eq("active", true)
       .order("name", { ascending: true });
-    if (!error) setProducts((data ?? []) as Product[]);
+    if (!error)
+      setProducts(
+        (data ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          categoria: normalizeCategoria(p.categoria),
+        }))
+      );
   }, [effectiveUserId]);
 
   useEffect(() => {
