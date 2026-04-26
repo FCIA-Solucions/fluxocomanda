@@ -11,9 +11,9 @@ export interface Database {
         Relationships: [];
       };
       products: {
-        Row: { id: string; user_id: string; name: string; price: number; cost: number | null; active: boolean; created_at: string };
-        Insert: { id?: string; user_id: string; name: string; price: number; cost?: number | null; active?: boolean; created_at?: string };
-        Update: { id?: string; user_id?: string; name?: string; price?: number; cost?: number | null; active?: boolean; created_at?: string };
+        Row: { id: string; user_id: string; name: string; price: number; cost: number | null; active: boolean; created_at: string; categoria: string | null };
+        Insert: { id?: string; user_id: string; name: string; price: number; cost?: number | null; active?: boolean; created_at?: string; categoria?: string | null };
+        Update: { id?: string; user_id?: string; name?: string; price?: number; cost?: number | null; active?: boolean; created_at?: string; categoria?: string | null };
         Relationships: [];
       };
       orders: {

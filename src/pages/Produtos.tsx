@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -29,11 +36,27 @@ import { supabase } from "@/integrations/supabase/client";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
+type Categoria = "bebidas" | "comidas" | "outros";
+
+const CATEGORIA_LABEL: Record<Categoria, string> = {
+  bebidas: "Bebidas",
+  comidas: "Comidas",
+  outros: "Outros",
+};
+
+const normalizeCategoria = (v: unknown): Categoria => {
+  const s = String(v ?? "").toLowerCase().trim();
+  if (s === "bebidas" || s === "bebida") return "bebidas";
+  if (s === "comidas" || s === "comida") return "comidas";
+  return "outros";
+};
+
 interface Product {
   id: string;
   name: string;
   price: number;
   active: boolean;
+  categoria: Categoria;
 }
 
 // Máscara: input em string de dígitos → reais (number)
@@ -52,6 +75,7 @@ export default function Produtos() {
 
   const [name, setName] = useState("");
   const [priceDigits, setPriceDigits] = useState(""); // só dígitos (centavos)
+  const [categoria, setCategoria] = useState<Categoria>("outros");
   const [saving, setSaving] = useState(false);
 
   const fetchProducts = useCallback(async () => {
@@ -59,13 +83,21 @@ export default function Produtos() {
     setLoading(true);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, price, active")
+      .select("id, name, price, active, categoria")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (error) {
       toast.error("Erro ao carregar produtos");
     } else {
-      setProducts((data ?? []) as Product[]);
+      setProducts(
+        (data ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          active: p.active,
+          categoria: normalizeCategoria(p.categoria),
+        }))
+      );
     }
     setLoading(false);
   }, [user]);
@@ -78,6 +110,7 @@ export default function Produtos() {
     setEditing(null);
     setName("");
     setPriceDigits("");
+    setCategoria("outros");
     setSheetOpen(true);
   };
 
@@ -85,6 +118,7 @@ export default function Produtos() {
     setEditing(p);
     setName(p.name);
     setPriceDigits(String(Math.round(p.price * 100)));
+    setCategoria(p.categoria);
     setSheetOpen(true);
   };
 
@@ -104,7 +138,7 @@ export default function Produtos() {
     if (editing) {
       const { error } = await supabase
         .from("products")
-        .update({ name: name.trim(), price })
+        .update({ name: name.trim(), price, categoria })
         .eq("id", editing.id);
       if (error) toast.error("Erro ao salvar");
       else {
@@ -115,7 +149,7 @@ export default function Produtos() {
     } else {
       const { error } = await supabase
         .from("products")
-        .insert({ user_id: user.id, name: name.trim(), price, active: true });
+        .insert({ user_id: user.id, name: name.trim(), price, active: true, categoria });
       if (error) toast.error("Erro ao criar");
       else {
         toast.success("Produto criado");
@@ -185,11 +219,12 @@ export default function Produtos() {
                 onClick={() => openEdit(p)}
                 className="flex-1 text-left"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-foreground">{p.name}</span>
                   <Badge variant={p.active ? "default" : "secondary"}>
                     {p.active ? "Ativo" : "Inativo"}
                   </Badge>
+                  <Badge variant="outline">{CATEGORIA_LABEL[p.categoria]}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{brl.format(p.price)}</p>
               </button>
@@ -251,6 +286,19 @@ export default function Produtos() {
                 placeholder="R$ 0,00"
                 className="h-12"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="prod-categoria">Categoria</Label>
+              <Select value={categoria} onValueChange={(v) => setCategoria(v as Categoria)}>
+                <SelectTrigger id="prod-categoria" className="h-12">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bebidas">Bebidas</SelectItem>
+                  <SelectItem value="comidas">Comidas</SelectItem>
+                  <SelectItem value="outros">Outros</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button onClick={handleSave} disabled={saving} className="h-14 w-full text-base font-semibold">
               {saving ? "Salvando..." : "Salvar"}

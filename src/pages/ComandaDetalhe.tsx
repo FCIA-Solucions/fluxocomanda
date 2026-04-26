@@ -61,10 +61,26 @@ interface OrderItem {
   subtotal: number;
 }
 
+type Categoria = "bebidas" | "comidas" | "outros";
+
+const CATEGORIA_LABEL: Record<Categoria, string> = {
+  bebidas: "Bebidas",
+  comidas: "Comidas",
+  outros: "Outros",
+};
+
+const normalizeCategoria = (v: unknown): Categoria => {
+  const s = String(v ?? "").toLowerCase().trim();
+  if (s === "bebidas" || s === "bebida") return "bebidas";
+  if (s === "comidas" || s === "comida") return "comidas";
+  return "outros";
+};
+
 interface Product {
   id: string;
   name: string;
   price: number;
+  categoria: Categoria;
 }
 
 type PaymentMethod = "dinheiro" | "pix" | "cartao";
@@ -101,6 +117,9 @@ export default function ComandaDetalhe() {
   const [guardarObs, setGuardarObs] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Filtro de categoria no cardápio
+  const [filterCat, setFilterCat] = useState<"all" | Categoria>("all");
+
   const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
@@ -128,7 +147,7 @@ export default function ComandaDetalhe() {
         .order("id", { ascending: true }),
       supabase
         .from("products")
-        .select("id, name, price")
+        .select("id, name, price, categoria")
         .eq("user_id", effectiveUserId)
         .eq("active", true)
         .order("name", { ascending: true }),
@@ -140,7 +159,14 @@ export default function ComandaDetalhe() {
     }
     setOrder(orderRes.data as Order);
     setItems((itemsRes.data ?? []) as OrderItem[]);
-    setProducts((productsRes.data ?? []) as Product[]);
+    setProducts(
+      (productsRes.data ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        categoria: normalizeCategoria(p.categoria),
+      }))
+    );
     setLoading(false);
   }, [user, id, navigate, effectiveUserId]);
 
@@ -154,11 +180,19 @@ export default function ComandaDetalhe() {
     if (!effectiveUserId) return;
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, categoria")
       .eq("user_id", effectiveUserId)
       .eq("active", true)
       .order("name", { ascending: true });
-    if (!error) setProducts((data ?? []) as Product[]);
+    if (!error)
+      setProducts(
+        (data ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          categoria: normalizeCategoria(p.categoria),
+        }))
+      );
   }, [effectiveUserId]);
 
   useEffect(() => {
@@ -539,6 +573,36 @@ export default function ComandaDetalhe() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Adicionar produto
             </h2>
+
+            {products.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {(["all", "bebidas", "comidas", "outros"] as const).map((cat) => {
+                  const active = filterCat === cat;
+                  const label = cat === "all" ? "Todos" : CATEGORIA_LABEL[cat];
+                  const count =
+                    cat === "all"
+                      ? products.length
+                      : products.filter((p) => p.categoria === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setFilterCat(cat)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/70"
+                      )}
+                    >
+                      {label}
+                      <span className="ml-1 opacity-70">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {products.length === 0 ? (
               <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
                 Nenhum produto ativo.{" "}
@@ -549,23 +613,35 @@ export default function ComandaDetalhe() {
                   Cadastrar
                 </button>
               </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {products.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => addProduct(p)}
-                    className={cn(
-                      "rounded-2xl bg-card p-4 text-left transition-all active:scale-[0.97]",
-                      highlightId === p.id && "ring-2 ring-primary bg-primary/10"
-                    )}
-                  >
-                    <p className="line-clamp-2 text-sm font-semibold text-foreground">{p.name}</p>
-                    <p className="mt-1 text-sm font-bold text-primary">{brl.format(Number(p.price))}</p>
-                  </button>
-                ))}
-              </div>
-            )}
+            ) : (() => {
+              const filtered = filterCat === "all"
+                ? products
+                : products.filter((p) => p.categoria === filterCat);
+              if (filtered.length === 0) {
+                return (
+                  <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
+                    Nenhum produto nesta categoria.
+                  </p>
+                );
+              }
+              return (
+                <div className="grid grid-cols-2 gap-3">
+                  {filtered.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => addProduct(p)}
+                      className={cn(
+                        "rounded-2xl bg-card p-4 text-left transition-all active:scale-[0.97]",
+                        highlightId === p.id && "ring-2 ring-primary bg-primary/10"
+                      )}
+                    >
+                      <p className="line-clamp-2 text-sm font-semibold text-foreground">{p.name}</p>
+                      <p className="mt-1 text-sm font-bold text-primary">{brl.format(Number(p.price))}</p>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
         )}
       </div>
