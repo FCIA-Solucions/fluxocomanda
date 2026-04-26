@@ -41,7 +41,7 @@ function computeStatus(
 ): { status: SubscriptionStatus; daysLeft: number; source: "trial" | "active" | "none" } {
   // Usuário novo (todos os campos vazios) → trial livre
   if (!hasAnyField) {
-    return { status: "trial", daysLeft: 3, source: "trial" };
+    return { status: "trial", daysLeft: 7, source: "trial" };
   }
 
   const now = Date.now();
