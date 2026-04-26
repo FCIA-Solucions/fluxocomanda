@@ -40,6 +40,12 @@ export interface Database {
         Update: { id?: string; user_id?: string; order_id?: string | null; total?: number; payment_method?: string | null; created_at?: string };
         Relationships: [];
       };
+      subscriptions: {
+        Row: { id: string; user_id: string; email: string | null; nome_negocio: string | null; plano: "trial" | "mensal" | "vitalicio"; ativo: boolean; trial_ends_at: string | null; subscription_expires_at: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; user_id: string; email?: string | null; nome_negocio?: string | null; plano?: "trial" | "mensal" | "vitalicio"; ativo?: boolean; trial_ends_at?: string | null; subscription_expires_at?: string | null; created_at?: string; updated_at?: string };
+        Update: { id?: string; user_id?: string; email?: string | null; nome_negocio?: string | null; plano?: "trial" | "mensal" | "vitalicio"; ativo?: boolean; trial_ends_at?: string | null; subscription_expires_at?: string | null; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       cash_closures: {
         Row: { id: string; user_id: string; closed_at: string; business_day: string; type: "manual" | "auto"; closed_by_name: string | null; total: number; total_dinheiro: number; total_pix: number; total_cartao: number; sales_count: number; created_at: string };
         Insert: { id?: string; user_id: string; closed_at?: string; business_day: string; type: "manual" | "auto"; closed_by_name?: string | null; total?: number; total_dinheiro?: number; total_pix?: number; total_cartao?: number; sales_count?: number; created_at?: string };
