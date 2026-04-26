@@ -47,6 +47,7 @@ interface Order {
   id: string;
   user_id: string;
   customer_name: string | null;
+  customer_id: string | null;
   status: string;
   total: number;
   payment_method: string | null;
@@ -136,7 +137,7 @@ export default function ComandaDetalhe() {
     const [orderRes, itemsRes, productsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, user_id, customer_name, status, total, payment_method")
+        .select("id, user_id, customer_name, customer_id, status, total, payment_method")
         .eq("id", id)
         .eq("user_id", effectiveUserId)
         .maybeSingle(),
@@ -369,6 +370,19 @@ export default function ComandaDetalhe() {
       closedAt: data?.closed_at ? new Date(data.closed_at) : new Date(),
       customerName: order.customer_name,
     });
+
+    // Pré-preencher WhatsApp do cliente vinculado, se houver
+    if (order.customer_id) {
+      const { data: cust } = await supabase
+        .from("customers")
+        .select("whatsapp")
+        .eq("id", order.customer_id)
+        .maybeSingle();
+      if (cust?.whatsapp) {
+        setPhone(maskPhoneBR(cust.whatsapp));
+      }
+    }
+
     setStep("share");
   };
 
