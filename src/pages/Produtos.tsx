@@ -90,7 +90,7 @@ export default function Produtos() {
       toast.error("Erro ao carregar produtos");
     } else {
       setProducts(
-        (data ?? []).map((p: { id: string; name: string; price: number; active: boolean; categoria: unknown }) => ({
+        (data ?? []).map((p) => ({
           id: p.id,
           name: p.name,
           price: p.price,
