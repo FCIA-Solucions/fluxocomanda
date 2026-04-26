@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, XCircle, Clock, Shield, Mail, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ADMIN_EMAIL } from "@/lib/subscriptionConfig";
 import { Button } from "@/components/ui/button";
@@ -20,19 +21,28 @@ function fmtDate(d: Date | null) {
 
 const Status = () => {
   const { user } = useAuth();
+  const profile = useProfile();
   const sub = useSubscription();
 
   const userEmail = user?.email ?? "—";
-  const isAdmin =
+  const isAdminEmail =
     !!ADMIN_EMAIL &&
     !!user?.email &&
-    user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-  const statusLabel = sub.status === "trial" ? "Trial" : sub.status === "active" ? "Ativa" : "Vencida";
+    user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase();
+  const isSuperadmin = profile.role === "superadmin";
+  const isAdmin = isAdminEmail || isSuperadmin;
+  const effectiveStatus = sub.isBlocked ? sub.status : "active";
+  const statusLabel = sub.isBlocked
+    ? sub.status === "trial"
+      ? "Trial"
+      : sub.status === "active"
+        ? "Ativa"
+        : "Vencida"
+    : "Liberada";
   const statusColor =
-    sub.status === "active"
+    effectiveStatus === "active"
       ? "bg-green-500/15 text-green-300 border-green-500/30"
-      : sub.status === "trial"
+      : effectiveStatus === "trial"
         ? "bg-blue-500/15 text-blue-300 border-blue-500/30"
         : "bg-red-500/15 text-red-300 border-red-500/30";
 
@@ -85,9 +95,9 @@ const Status = () => {
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-muted-foreground">
-                  <Shield className="h-4 w-4" /> Admin configurado
+                  <Shield className="h-4 w-4" /> Role no banco
                 </span>
-                <span className="font-mono text-xs break-all text-right">{ADMIN_EMAIL || "—"}</span>
+                <span className="font-mono text-xs break-all text-right">{profile.role}</span>
               </div>
             </div>
           </CardContent>
@@ -119,7 +129,7 @@ const Status = () => {
                         : "Status"}
                   </p>
                   <p className="mt-1 text-4xl font-bold">
-                    {sub.status === "expired" ? "Vencido" : `${sub.daysLeft} ${sub.daysLeft === 1 ? "dia" : "dias"}`}
+                    {sub.isBlocked ? "Vencido" : sub.status === "expired" ? "Liberado por admin" : `${sub.daysLeft} ${sub.daysLeft === 1 ? "dia" : "dias"}`}
                   </p>
                 </div>
 

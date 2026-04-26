@@ -31,7 +31,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
     return <Navigate to="/assinatura" replace />;
   }
 
-  if (adminOnly && role !== "admin") {
+  if (adminOnly && role !== "admin" && role !== "superadmin") {
     return <Navigate to="/comandas" replace />;
   }
 

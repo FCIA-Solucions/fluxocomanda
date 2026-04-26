@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, ReactNode 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type AppRole = "admin" | "garcom";
+export type AppRole = "admin" | "garcom" | "superadmin";
 
 export interface ProfileState {
   role: AppRole;

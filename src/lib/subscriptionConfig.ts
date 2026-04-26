@@ -7,7 +7,7 @@ export const WHATSAPP_NUMBER =
   "5594999553574";
 
 export const ADMIN_EMAIL =
-  (import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ??
+  (import.meta.env.VITE_ADMIN_EMAIL as string | undefined)?.trim() ||
   "blindadoemotivado@gmail.com";
 
 export const PLANS = {
