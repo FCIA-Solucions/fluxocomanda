@@ -244,7 +244,7 @@ export default function Comandas() {
                                 dias >= 7
                                   ? "bg-destructive/15 text-destructive"
                                   : dias >= 3
-                                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                    ? "bg-primary/15 text-primary"
                                     : "bg-muted text-muted-foreground"
                               )}
                             >
