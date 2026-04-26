@@ -81,16 +81,31 @@ export default function Produtos() {
   const fetchProducts = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+
+    // Tenta buscar com a coluna 'categoria'. Se ela ainda não existir no banco,
+    // faz fallback para a query antiga (sem categoria) para a tela continuar funcionando.
+    let { data, error } = await supabase
       .from("products")
       .select("id, name, price, active, categoria")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
+
+    if (error && /categoria/i.test(error.message)) {
+      const fallback = await supabase
+        .from("products")
+        .select("id, name, price, active")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      data = fallback.data as typeof data;
+      error = fallback.error;
+    }
+
     if (error) {
-      toast.error("Erro ao carregar produtos");
+      console.error("[Produtos] erro ao carregar:", error);
+      toast.error("Erro ao carregar produtos", { description: error.message });
     } else {
       setProducts(
-        (data ?? []).map((p) => ({
+        (data ?? []).map((p: { id: string; name: string; price: number; active: boolean; categoria?: unknown }) => ({
           id: p.id,
           name: p.name,
           price: p.price,
