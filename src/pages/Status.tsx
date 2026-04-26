@@ -129,7 +129,7 @@ const Status = () => {
                         : "Status"}
                   </p>
                   <p className="mt-1 text-4xl font-bold">
-                    {sub.status === "expired" ? "Vencido" : `${sub.daysLeft} ${sub.daysLeft === 1 ? "dia" : "dias"}`}
+                    {sub.isBlocked ? "Vencido" : sub.status === "expired" ? "Liberado por admin" : `${sub.daysLeft} ${sub.daysLeft === 1 ? "dia" : "dias"}`}
                   </p>
                 </div>
 
