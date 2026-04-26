@@ -17,9 +17,15 @@ export interface Database {
         Relationships: [];
       };
       orders: {
-        Row: { id: string; user_id: string; customer_name: string | null; status: string; total: number; payment_method: string | null; created_at: string; closed_at: string | null; guardada_em: string | null; guardada_obs: string | null };
-        Insert: { id?: string; user_id: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
-        Update: { id?: string; user_id?: string; customer_name?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
+        Row: { id: string; user_id: string; customer_name: string | null; customer_id: string | null; status: string; total: number; payment_method: string | null; created_at: string; closed_at: string | null; guardada_em: string | null; guardada_obs: string | null };
+        Insert: { id?: string; user_id: string; customer_name?: string | null; customer_id?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
+        Update: { id?: string; user_id?: string; customer_name?: string | null; customer_id?: string | null; status?: string; total?: number; payment_method?: string | null; created_at?: string; closed_at?: string | null; guardada_em?: string | null; guardada_obs?: string | null };
+        Relationships: [];
+      };
+      customers: {
+        Row: { id: string; user_id: string; nome: string; apelido: string | null; whatsapp: string | null; created_at: string };
+        Insert: { id?: string; user_id: string; nome: string; apelido?: string | null; whatsapp?: string | null; created_at?: string };
+        Update: { id?: string; user_id?: string; nome?: string; apelido?: string | null; whatsapp?: string | null; created_at?: string };
         Relationships: [];
       };
       order_items: {
