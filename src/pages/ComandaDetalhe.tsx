@@ -370,6 +370,19 @@ export default function ComandaDetalhe() {
       closedAt: data?.closed_at ? new Date(data.closed_at) : new Date(),
       customerName: order.customer_name,
     });
+
+    // Pré-preencher WhatsApp do cliente vinculado, se houver
+    if (order.customer_id) {
+      const { data: cust } = await supabase
+        .from("customers")
+        .select("whatsapp")
+        .eq("id", order.customer_id)
+        .maybeSingle();
+      if (cust?.whatsapp) {
+        setPhone(maskPhoneBR(cust.whatsapp));
+      }
+    }
+
     setStep("share");
   };
 
