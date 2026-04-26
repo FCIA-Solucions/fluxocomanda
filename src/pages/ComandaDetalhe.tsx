@@ -117,6 +117,9 @@ export default function ComandaDetalhe() {
   const [guardarObs, setGuardarObs] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Filtro de categoria no cardápio
+  const [filterCat, setFilterCat] = useState<"all" | Categoria>("all");
+
   const { business } = useBusiness();
 
   const isClosed = order?.status === "closed";
