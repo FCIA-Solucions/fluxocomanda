@@ -4,7 +4,6 @@ import { ArrowLeft, AlertTriangle, Eye, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -17,6 +16,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { CustomerAutocomplete, CustomerLite } from "@/components/CustomerAutocomplete";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -33,6 +33,7 @@ export default function NovaComanda() {
   const { effectiveUserId } = useProfile();
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [customer, setCustomer] = useState<CustomerLite | null>(null);
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
@@ -46,6 +47,7 @@ export default function NovaComanda() {
       .insert({
         user_id: effectiveUserId,
         customer_name: trimmed,
+        customer_id: customer?.id ?? null,
         status: "open",
         total: 0,
       })
@@ -53,7 +55,7 @@ export default function NovaComanda() {
       .single();
     setSaving(false);
     if (error || !data) {
-      toast.error("Erro ao criar comanda");
+      toast.error("Erro ao criar comanda", { description: error?.message });
       return;
     }
     toast.success("Comanda criada");
@@ -62,7 +64,7 @@ export default function NovaComanda() {
 
   const handleCreate = async () => {
     if (!user || !effectiveUserId) return;
-    const trimmed = name.trim();
+    const trimmed = (customer?.nome ?? name).trim();
     if (!trimmed) {
       toast.error("Informe o nome ou mesa");
       return;
@@ -101,7 +103,7 @@ export default function NovaComanda() {
   const handleCreateAnyway = async () => {
     setDuplicateOpen(false);
     setDuplicateOrder(null);
-    await doInsert(name.trim());
+    await doInsert((customer?.nome ?? name).trim());
   };
 
   const handleCancelDuplicate = () => {
@@ -125,18 +127,22 @@ export default function NovaComanda() {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="customer-name">Nome ou mesa</Label>
-          <Input
-            id="customer-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Mesa 3, João"
-            className="h-14 text-base"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-            }}
-          />
+          <Label htmlFor="customer-name">Cliente ou mesa</Label>
+          {effectiveUserId && (
+            <CustomerAutocomplete
+              ownerId={effectiveUserId}
+              value={customer}
+              text={name}
+              onTextChange={setName}
+              onSelect={setCustomer}
+              placeholder="Ex.: Mesa 3, João, ou apelido/WhatsApp"
+              autoFocus
+              onSubmitEnter={handleCreate}
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Digite ao menos 2 letras para buscar clientes cadastrados.
+          </p>
         </div>
         <Button
           onClick={handleCreate}
