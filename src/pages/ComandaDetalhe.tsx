@@ -573,6 +573,36 @@ export default function ComandaDetalhe() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Adicionar produto
             </h2>
+
+            {products.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {(["all", "bebidas", "comidas", "outros"] as const).map((cat) => {
+                  const active = filterCat === cat;
+                  const label = cat === "all" ? "Todos" : CATEGORIA_LABEL[cat];
+                  const count =
+                    cat === "all"
+                      ? products.length
+                      : products.filter((p) => p.categoria === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setFilterCat(cat)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/70"
+                      )}
+                    >
+                      {label}
+                      <span className="ml-1 opacity-70">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {products.length === 0 ? (
               <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
                 Nenhum produto ativo.{" "}
@@ -583,7 +613,18 @@ export default function ComandaDetalhe() {
                   Cadastrar
                 </button>
               </p>
-            ) : (
+            ) : (() => {
+              const filtered = filterCat === "all"
+                ? products
+                : products.filter((p) => p.categoria === filterCat);
+              if (filtered.length === 0) {
+                return (
+                  <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
+                    Nenhum produto nesta categoria.
+                  </p>
+                );
+              }
+              return (
               <div className="grid grid-cols-2 gap-3">
                 {products.map((p) => (
                   <button
