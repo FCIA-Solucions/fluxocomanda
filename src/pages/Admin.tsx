@@ -28,17 +28,15 @@ import { ADMIN_EMAIL } from "@/lib/subscriptionConfig";
 
 type Plano = "trial" | "mensal" | "vitalicio";
 
-interface SubscriptionRow {
+interface ProfileRow {
   id: string;
-  user_id: string;
+  business_name: string | null;
   email: string | null;
-  nome_negocio: string | null;
-  plano: Plano;
-  ativo: boolean;
+  subscription_status: string | null;
   trial_ends_at: string | null;
   subscription_expires_at: string | null;
+  role: "admin" | "garcom" | null;
   created_at: string;
-  updated_at: string;
 }
 
 function formatDate(value: string | null) {
@@ -58,12 +56,27 @@ function toDateInputValue(value: string | null) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-function getEffectiveStatus(row: SubscriptionRow): "ativo" | "trial" | "expirado" | "inativo" {
-  if (!row.ativo) return "inativo";
+function getPlano(row: ProfileRow): Plano {
+  const s = (row.subscription_status ?? "").toLowerCase();
+  if (s === "vitalicio" || s === "lifetime") return "vitalicio";
+  if (s === "active" || s === "mensal") return "mensal";
+  return "trial";
+}
+
+function isAtivo(row: ProfileRow): boolean {
+  const s = (row.subscription_status ?? "").toLowerCase();
+  return s !== "inactive" && s !== "blocked" && s !== "inativo";
+}
+
+function getEffectiveStatus(row: ProfileRow): "ativo" | "trial" | "expirado" | "inativo" {
+  if (!isAtivo(row)) return "inativo";
+  const plano = getPlano(row);
   const now = Date.now();
-  if (row.plano === "vitalicio") return "ativo";
-  if (row.plano === "mensal") {
-    const exp = row.subscription_expires_at ? new Date(row.subscription_expires_at).getTime() : 0;
+  if (plano === "vitalicio") return "ativo";
+  if (plano === "mensal") {
+    const exp = row.subscription_expires_at
+      ? new Date(row.subscription_expires_at).getTime()
+      : 0;
     return exp > now ? "ativo" : "expirado";
   }
   // trial
@@ -71,7 +84,7 @@ function getEffectiveStatus(row: SubscriptionRow): "ativo" | "trial" | "expirado
   return t > now ? "trial" : "expirado";
 }
 
-function StatusBadge({ row }: { row: SubscriptionRow }) {
+function StatusBadge({ row }: { row: ProfileRow }) {
   const s = getEffectiveStatus(row);
   if (s === "ativo")
     return <Badge className="bg-emerald-500 hover:bg-emerald-500/90 text-white">Ativo</Badge>;
@@ -84,10 +97,10 @@ function StatusBadge({ row }: { row: SubscriptionRow }) {
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
-  const [rows, setRows] = useState<SubscriptionRow[]>([]);
+  const [rows, setRows] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<SubscriptionRow | null>(null);
+  const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editPlano, setEditPlano] = useState<Plano>("trial");
   const [editExpires, setEditExpires] = useState("");
   const [editTrial, setEditTrial] = useState("");
@@ -99,14 +112,17 @@ export default function Admin() {
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
+      .from("profiles")
+      .select(
+        "id, business_name, email, subscription_status, trial_ends_at, subscription_expires_at, role, created_at"
+      )
       .order("created_at", { ascending: false });
     if (error) {
       toast.error("Erro ao carregar clientes: " + error.message);
       setRows([]);
     } else {
-      setRows((data ?? []) as SubscriptionRow[]);
+      // Mostrar só os donos (admin); ocultar garçons
+      setRows(((data ?? []) as ProfileRow[]).filter((r) => r.role !== "garcom"));
     }
     setLoading(false);
   };
@@ -120,7 +136,7 @@ export default function Admin() {
     if (!q) return rows;
     return rows.filter(
       (r) =>
-        (r.nome_negocio ?? "").toLowerCase().includes(q) ||
+        (r.business_name ?? "").toLowerCase().includes(q) ||
         (r.email ?? "").toLowerCase().includes(q)
     );
   }, [rows, search]);
@@ -135,24 +151,42 @@ export default function Admin() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAuthorized) return <Navigate to="/" replace />;
 
-  const toggleAtivo = async (row: SubscriptionRow) => {
+  const toggleAtivo = async (row: ProfileRow) => {
     setSavingId(row.id);
+    let novoStatus: string;
+    if (isAtivo(row)) {
+      novoStatus = "inactive";
+    } else {
+      // Reativar: escolhe o status apropriado pelos campos atuais
+      if ((row.subscription_status ?? "").toLowerCase() === "vitalicio") {
+        novoStatus = "vitalicio";
+      } else if (
+        row.subscription_expires_at &&
+        new Date(row.subscription_expires_at).getTime() > Date.now()
+      ) {
+        novoStatus = "active";
+      } else {
+        novoStatus = "trial";
+      }
+    }
     const { error } = await supabase
-      .from("subscriptions")
-      .update({ ativo: !row.ativo, updated_at: new Date().toISOString() })
+      .from("profiles")
+      .update({ subscription_status: novoStatus })
       .eq("id", row.id);
     setSavingId(null);
     if (error) {
       toast.error("Erro: " + error.message);
       return;
     }
-    toast.success(row.ativo ? "Cliente desativado" : "Cliente ativado");
-    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: !r.ativo } : r)));
+    toast.success(isAtivo(row) ? "Cliente desativado" : "Cliente ativado");
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, subscription_status: novoStatus } : r))
+    );
   };
 
-  const openEdit = (row: SubscriptionRow) => {
+  const openEdit = (row: ProfileRow) => {
     setEditing(row);
-    setEditPlano(row.plano);
+    setEditPlano(getPlano(row));
     setEditExpires(toDateInputValue(row.subscription_expires_at));
     setEditTrial(toDateInputValue(row.trial_ends_at));
   };
@@ -160,15 +194,23 @@ export default function Admin() {
   const saveEdit = async () => {
     if (!editing) return;
     setSavingId(editing.id);
-    const update: Partial<SubscriptionRow> = {
-      plano: editPlano,
-      subscription_expires_at:
-        editPlano === "mensal" && editExpires ? new Date(editExpires).toISOString() : null,
-      trial_ends_at:
-        editPlano === "trial" && editTrial ? new Date(editTrial).toISOString() : null,
-      updated_at: new Date().toISOString(),
-    };
-    const { error } = await supabase.from("subscriptions").update(update).eq("id", editing.id);
+    const update: Partial<ProfileRow> = {};
+    if (editPlano === "trial") {
+      update.subscription_status = "trial";
+      update.trial_ends_at = editTrial ? new Date(editTrial).toISOString() : null;
+      update.subscription_expires_at = null;
+    } else if (editPlano === "mensal") {
+      update.subscription_status = "active";
+      update.subscription_expires_at = editExpires
+        ? new Date(editExpires).toISOString()
+        : null;
+      update.trial_ends_at = null;
+    } else {
+      update.subscription_status = "vitalicio";
+      update.trial_ends_at = null;
+      update.subscription_expires_at = null;
+    }
+    const { error } = await supabase.from("profiles").update(update).eq("id", editing.id);
     setSavingId(null);
     if (error) {
       toast.error("Erro ao salvar: " + error.message);
@@ -213,26 +255,25 @@ export default function Admin() {
         ) : (
           <div className="space-y-3">
             {filtered.map((row) => {
+              const plano = getPlano(row);
               const expDate =
-                row.plano === "vitalicio"
+                plano === "vitalicio"
                   ? "Vitalício"
-                  : row.plano === "mensal"
+                  : plano === "mensal"
                   ? formatDate(row.subscription_expires_at)
                   : formatDate(row.trial_ends_at);
+              const ativo = isAtivo(row);
               return (
-                <div
-                  key={row.id}
-                  className="rounded-lg border bg-card p-4 shadow-sm"
-                >
+                <div key={row.id} className="rounded-lg border bg-card p-4 shadow-sm">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold truncate">
-                          {row.nome_negocio || "(sem nome)"}
+                          {row.business_name || "(sem nome)"}
                         </h3>
                         <StatusBadge row={row} />
                         <Badge variant="outline" className="capitalize">
-                          {row.plano}
+                          {plano}
                         </Badge>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground truncate">
@@ -254,12 +295,12 @@ export default function Admin() {
                       </Button>
                       <Button
                         size="sm"
-                        variant={row.ativo ? "destructive" : "default"}
+                        variant={ativo ? "destructive" : "default"}
                         onClick={() => toggleAtivo(row)}
                         disabled={savingId === row.id}
                       >
                         <Power className="mr-2 h-4 w-4" />
-                        {row.ativo ? "Desativar" : "Ativar"}
+                        {ativo ? "Desativar" : "Ativar"}
                       </Button>
                     </div>
                   </div>
@@ -275,7 +316,7 @@ export default function Admin() {
           <DialogHeader>
             <DialogTitle>Definir plano</DialogTitle>
             <DialogDescription>
-              {editing?.nome_negocio || editing?.email}
+              {editing?.business_name || editing?.email}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
