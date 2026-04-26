@@ -119,71 +119,11 @@ export default function Caixa() {
     setLoading(false);
   }, [user, todayBd]);
 
-  // Auto-fechar dias anteriores que tenham vendas mas não tenham fechamento
-  const autoCloseOldDays = useCallback(async () => {
-    if (!user) return;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayISO = todayStart.toISOString();
-
-    const oldSalesRes = await supabase
-      .from("sales")
-      .select("total, payment_method, created_at")
-      .eq("user_id", user.id)
-      .lt("created_at", todayISO);
-
-    const oldSales = oldSalesRes.data ?? [];
-    if (oldSales.length === 0) return;
-
-    // Agrupa por business_day local
-    const byDay = new Map<string, typeof oldSales>();
-    for (const s of oldSales) {
-      const bd = toBusinessDay(new Date(s.created_at));
-      if (!byDay.has(bd)) byDay.set(bd, []);
-      byDay.get(bd)!.push(s);
-    }
-
-    const days = Array.from(byDay.keys());
-    const existingRes = await supabase
-      .from("cash_closures")
-      .select("business_day")
-      .eq("user_id", user.id)
-      .in("business_day", days);
-
-    const existing = new Set((existingRes.data ?? []).map((r) => r.business_day));
-    const toCreate = days.filter((d) => !existing.has(d));
-    if (toCreate.length === 0) return;
-
-    const rows = toCreate.map((bd) => {
-      const list = byDay.get(bd)!;
-      const total = list.reduce((a, s) => a + Number(s.total ?? 0), 0);
-      const sum = (m: string) =>
-        list.filter((s) => s.payment_method === m).reduce((a, s) => a + Number(s.total ?? 0), 0);
-      // closed_at = fim do dia local
-      const closedAt = new Date(`${bd}T23:59:59`);
-      return {
-        user_id: user.id,
-        business_day: bd,
-        type: "auto" as const,
-        closed_by_name: null,
-        closed_at: closedAt.toISOString(),
-        total,
-        total_dinheiro: sum("dinheiro"),
-        total_pix: sum("pix"),
-        total_cartao: sum("cartao"),
-        sales_count: list.length,
-      };
-    });
-
-    await supabase.from("cash_closures").insert(rows);
-  }, [user]);
-
+  // IMPORTANTE: removido qualquer fechamento automático de caixa/comanda.
+  // Caixa e comandas só são fechados por ação manual do usuário.
   useEffect(() => {
-    (async () => {
-      await autoCloseOldDays();
-      await load();
-    })();
-  }, [autoCloseOldDays, load]);
+    load();
+  }, [load]);
 
   const totalDia = sales.reduce((acc, s) => acc + Number(s.total ?? 0), 0);
   const totalDinheiro = sales.filter((s) => s.payment_method === "dinheiro").reduce((a, s) => a + Number(s.total ?? 0), 0);
