@@ -58,7 +58,37 @@ if ("serviceWorker" in navigator) {
     });
   } else {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          // Verifica imediatamente se há nova versão disponível
+          reg.update().catch(() => {});
+
+          // Quando uma nova versão do SW for instalada e ativada,
+          // recarrega a página automaticamente para pegar os assets novos.
+          reg.addEventListener("updatefound", () => {
+            const newSW = reg.installing;
+            if (!newSW) return;
+            newSW.addEventListener("statechange", () => {
+              if (
+                newSW.state === "activated" &&
+                navigator.serviceWorker.controller
+              ) {
+                window.location.reload();
+              }
+            });
+          });
+        })
+        .catch(() => {});
+
+      // Fallback: se o SW controlador mudar (nova versão assumiu),
+      // recarrega para garantir consistência dos assets.
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
     });
   }
 }
