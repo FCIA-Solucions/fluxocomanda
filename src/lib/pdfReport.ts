@@ -56,9 +56,9 @@ function drawHeader(doc: jsPDF, businessName: string) {
   doc.text(brand, pageWidth - marginX - brandWidth, top);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(...FCIA_GREEN);
-  const sub = "by FCIA";
+  const sub = "by FCIA - Soluções em Tecnologia";
   const subWidth = doc.getTextWidth(sub);
   doc.text(sub, pageWidth - marginX - subWidth, top + 5);
 
@@ -74,7 +74,7 @@ function drawFooter(doc: jsPDF) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const marginX = 14;
   const generatedAt = `Gerado em ${dateTimeFmt.format(new Date())}`;
-  const credit = "FluxoComanda · by FCIA Soluções em Tecnologia";
+  const credit = "FluxoComanda · by FCIA - Soluções em Tecnologia";
 
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
