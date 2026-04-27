@@ -1,41 +1,70 @@
-## Causa raiz
+## Vídeo demonstrativo do FluxoComanda
 
-O erro `new row violates row-level security policy for table "products"` e a personalização que "não salva" têm a mesma origem: a **conta nova não tem profile válido** (ou o profile foi criado sem `role`/`owner_id` corretos), então:
+Vou produzir um vídeo de **45 segundos no formato quadrado 1080x1080** (ideal para Instagram Feed e WhatsApp), todo animado em código com Remotion + React, seguindo a identidade visual real do app (fundo dark slate + verde #22c55e + fonte Inter). O resultado será um arquivo MP4 pronto para baixar.
 
-- `public.effective_owner(auth.uid())` retorna `NULL`
-- O `INSERT` em `products` envia `user_id = user.id` mas a política RLS exige `user_id = effective_owner(auth.uid())` → `NULL ≠ user.id` → bloqueio.
-- O `UPDATE profiles WHERE id = user.id` simplesmente **não encontra a linha** e retorna 0 rows afetadas (sem erro) → a UI mostra "salvo ✅" mas nada mudou.
+### Direção criativa
 
-Isso provavelmente foi causado pela migração `SUPABASE_MULTI_ADMIN.sql` que removeu o CHECK constraint de `role` mas o trigger `on_auth_user_created` (que cria o profile no signup) pode ter ficado quebrado, ou o profile dessa conta nova ficou sem `role`.
+- **Estilo**: Tech Product — limpo, geométrico, transições snappy. Mockups de celular animados mostrando o app em ação.
+- **Paleta** (extraída do app):
+  - Fundo: `#0F172A` (slate 900)
+  - Card/UI: `#1E293B`
+  - Verde primário: `#22C55E`
+  - Texto: `#F8FAFC` / muted `#94A3B8`
+- **Tipografia**: Inter (já é a fonte do app), pesos 400/600/700.
+- **Motivos**: cards arredondados (radius 1rem), grid sutil ao fundo, ícones lucide animados, "blobs" verdes desfocados se movendo lentamente.
 
-## Plano
+### Roteiro (45s — 1350 frames @ 30fps)
 
-### 1. SQL para diagnóstico e correção (arquivo `SUPABASE_FIX_NEW_ACCOUNTS.sql`)
+```text
+┌─ 0s–4s   HOOK            "Cansado de anotar comanda no papel?"
+│                          Papel rasgando → app aparece no celular
+├─ 4s–9s   LOGO/PROMESSA   Logo FluxoComanda + tagline
+│                          "Suas comandas, seu caixa, no seu bolso."
+├─ 9s–17s  CENA 1          Agilidade: abrir comanda + lançar produto
+│                          Mockup celular: digita "Mesa 7" → tap em itens
+├─ 17s–25s CENA 2          Caixa: vendas entrando por Pix/Cartão/Dinheiro
+│                          Cards animados com R$ subindo + barras
+├─ 25s–32s CENA 3          Relatórios: gráfico de barras crescendo
+│                          "Saiba quanto vendeu, quando e como"
+├─ 32s–38s CENA 4          PWA: ícone do app pulando pra tela inicial
+│                          "Instala no celular, funciona offline"
+├─ 38s–45s CTA FINAL       Logo + "7 dias grátis · fluxocomanda.lovable.app"
+└─                         WhatsApp (94) 99955-3574
+```
 
-- Recriar/garantir o trigger `handle_new_user` que insere em `profiles` com `role='admin'`, `owner_id=NULL`, `email` e `trial_ends_at = now()+7d` quando um usuário é criado em `auth.users`.
-- Fazer um `INSERT ... ON CONFLICT DO NOTHING` retroativo para criar profiles em todos os `auth.users` que não têm linha em `profiles`.
-- Fazer `UPDATE profiles SET role='admin' WHERE role IS NULL OR role NOT IN ('admin','garcom','superadmin')` para corrigir profiles existentes.
-- Reafirmar o CHECK constraint em `role` aceitando os 3 valores.
-- Mostrar o SQL no chat para o usuário rodar no SQL Editor.
+### Componentes técnicos
 
-### 2. Código defensivo
+- **Setup**: pasta `remotion/` no projeto com Bun + Remotion 4 + transitions + google-fonts (Inter).
+- **Render programático** via `scripts/render-remotion.mjs` (chrome-for-testing, muted=true para encode, depois faço o mux do áudio com ffmpeg).
+- **Composição principal** `main` 1080x1080 @ 30fps, 1350 frames.
+- **Cenas individuais** em `src/scenes/`:
+  - `Hook.tsx`, `Logo.tsx`, `Comanda.tsx`, `Caixa.tsx`, `Relatorios.tsx`, `PWA.tsx`, `CTA.tsx`
+- **Mockup de celular**: componente `PhoneFrame.tsx` reusável (moldura escura com notch, viewport 9:19) reproduzindo telas reais do app com Tailwind.
+- **Layers persistentes**: gradiente animado de fundo + 3 blobs verdes desfocados drift lento, atravessando todas as cenas.
+- **Transições**: `wipe` direcional + `slide` com `springTiming` entre cenas — consistente em todas.
+- **Música**: gerada via ElevenLabs Music API (precisa do segredo `ELEVENLABS_API_KEY`). Prompt: *"upbeat corporate tech background music, modern, optimistic, light percussion, no vocals, 45 seconds"*. Mux via ffmpeg no MP4 final.
+  - Fallback: se a chave não estiver disponível, entrego o vídeo sem áudio e te aviso.
 
-- **`src/pages/Produtos.tsx`**: trocar `user_id: user.id` por `user_id: effectiveUserId` nos 2 inserts (linhas 174 e 178), e usar `effectiveUserId` também nos selects (linhas 91 e 98) — assim garçons também enxergam os produtos do dono.
-- **`src/pages/Caixa.tsx`**: trocar `user_id: user.id` (linha 147) e os filtros `eq("user_id", user.id)` (linhas 85, 101) por `effectiveUserId`. Manter o `eq("id", user.id)` da linha 142 que busca o profile do próprio usuário.
-- **`src/pages/MeuNegocio.tsx`** (`handleSave`): após o `update`, checar se retornou alguma linha (`.select()`) — se 0 linhas, mostrar erro claro "Perfil não encontrado, rode o SQL de correção" em vez de "salvo ✅" enganoso. E mostrar o `error?.message` real.
-- **`src/hooks/useProfile.tsx`**: se o `select` em `profiles` retornar `null` (profile não existe), tentar criar via `insert` com `role='admin'` e os defaults — fallback de auto-cura do lado do cliente.
+### Animação por cena (resumo das técnicas)
 
-### 3. Validação
+| Cena | Animações principais |
+|---|---|
+| Hook | papel rasgando (clip-path animado), celular sobe com spring damping 12 |
+| Comanda | typing simulado da palavra "Mesa 7", produtos entrando staggered (delay 6f), badge de qtd contando |
+| Caixa | 3 cards (Pix/Cartão/Dinheiro) com valores interpolando R$ 0 → R$ X, barras crescendo width |
+| Relatórios | barras de gráfico crescendo individualmente com spring, números do topo contando |
+| PWA | ícone do app pula da tela do navegador para a home do celular (translate + scale spring) |
+| CTA | logo escala in + botões pulsam suavemente com seno |
 
-Após rodar o SQL e o código atualizado:
-- Logar com a conta nova → o `useProfile` deve carregar `role='admin'` e `effectiveUserId = user.id`.
-- Personalizar Meu Negócio → toast "Configurações salvas" e os dados persistirem após reload.
-- Criar um produto → sem erro de RLS.
+### Entregáveis
 
-### Arquivos afetados
+1. `/mnt/documents/fluxocomanda-demo.mp4` — vídeo final 1080x1080, ~45s, com música.
+2. Código-fonte versionado em `remotion/` no projeto (você poderá pedir ajustes/re-render depois sem refazer do zero).
 
-- `SUPABASE_FIX_NEW_ACCOUNTS.sql` (novo)
-- `src/pages/Produtos.tsx`
-- `src/pages/Caixa.tsx`
-- `src/pages/MeuNegocio.tsx`
-- `src/hooks/useProfile.tsx`
+### Pré-requisito
+
+Para gerar a trilha musical preciso da chave **`ELEVENLABS_API_KEY`** configurada no Lovable Cloud. Se ainda não estiver, vou pedir antes de renderizar a parte de áudio. O vídeo visual é renderizado independente disso.
+
+### Próximo passo
+
+Aprove este plano e eu já entro em modo de implementação: monto o projeto Remotion, gero a música, renderizo o MP4 e te entrego o link de download.
