@@ -106,9 +106,35 @@ export default function Admin() {
   const [editExpires, setEditExpires] = useState("");
   const [editTrial, setEditTrial] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  const isAuthorized =
+  const isMasterEmail =
     !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorized = isMasterEmail || myRole === "superadmin";
+
+  // Carrega o role do próprio usuário para liberar acesso
+  useEffect(() => {
+    if (!user) {
+      setAuthChecked(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setMyRole((data?.role as string) ?? null);
+        setAuthChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const load = async () => {
     setLoading(true);
@@ -122,7 +148,7 @@ export default function Admin() {
       toast.error("Erro ao carregar clientes: " + error.message);
       setRows([]);
     } else {
-      // Mostrar só os donos (admin); ocultar garçons
+      // Mostrar só os donos (admin/superadmin); ocultar garçons
       setRows(((data ?? []) as ProfileRow[]).filter((r) => r.role !== "garcom"));
     }
     setLoading(false);
