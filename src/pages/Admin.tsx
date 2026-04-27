@@ -36,7 +36,7 @@ interface ProfileRow {
   subscription_status: string | null;
   trial_ends_at: string | null;
   subscription_expires_at: string | null;
-  role: "admin" | "garcom" | null;
+  role: "admin" | "garcom" | "superadmin" | null;
   created_at: string;
 }
 
