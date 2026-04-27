@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2, Shield } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
