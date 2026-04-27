@@ -43,7 +43,7 @@ export const Comanda: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          top: 80,
+          top: 50,
           opacity: headerOp,
           transform: `translateY(${headerY}px)`,
           textAlign: "center",
@@ -63,13 +63,13 @@ export const Comanda: React.FC = () => {
         >
           ⚡ AGILIDADE
         </div>
-        <h2 style={{ fontSize: 56, color: colors.text, margin: "16px 0 0 0", fontWeight: 800, letterSpacing: -1 }}>
+        <h2 style={{ fontSize: 44, color: colors.text, margin: "12px 0 0 0", fontWeight: 800, letterSpacing: -1 }}>
           Comanda em <span style={{ color: colors.primary }}>segundos</span>
         </h2>
       </div>
 
       {/* Phone */}
-      <div style={{ transform: `scale(${phoneIn * 0.3 + 0.7}) translateY(${(1 - phoneIn) * 50}px)`, marginTop: 80 }}>
+      <div style={{ transform: `scale(${phoneIn * 0.3 + 0.7}) translateY(${(1 - phoneIn) * 50}px)`, marginTop: 220 }}>
         <PhoneFrame scale={1.05}>
           <div style={{ padding: 18 }}>
             <div style={{ fontSize: 11, color: colors.muted }}>Nova Comanda</div>
