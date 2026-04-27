@@ -19,12 +19,13 @@ import { cn } from "@/lib/utils";
 export default function MeuNegocio() {
   const { user } = useAuth();
   const { role } = useProfile();
-  const { status } = useSubscription();
+  const { status, daysLeft, trialEndsAt, subscriptionExpiresAt } = useSubscription();
   const navigate = useNavigate();
   const { business, loading, refresh, setLocal } = useBusiness();
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "superadmin";
+  const isSuperadmin = role === "superadmin";
   const hasPaidPlan = status === "active";
 
   const [businessName, setBusinessName] = useState("");
