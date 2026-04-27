@@ -326,6 +326,9 @@ export default function Admin() {
                   ? formatDate(row.subscription_expires_at)
                   : formatDate(row.trial_ends_at);
               const ativo = isAtivo(row);
+              const isSuper = row.role === "superadmin";
+              const isMaster =
+                !!row.email && row.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
               return (
                 <div key={row.id} className="rounded-lg border bg-card p-4 shadow-sm">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -338,6 +341,12 @@ export default function Admin() {
                         <Badge variant="outline" className="capitalize">
                           {plano}
                         </Badge>
+                        {isSuper && (
+                          <Badge className="bg-purple-600 hover:bg-purple-600/90 text-white">
+                            <Shield className="mr-1 h-3 w-3" />
+                            Superadmin
+                          </Badge>
+                        )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground truncate">
                         {row.email || "—"}
