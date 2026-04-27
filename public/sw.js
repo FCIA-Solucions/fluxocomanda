@@ -1,7 +1,9 @@
-// FluxoComanda — Service Worker básico
+// FluxoComanda — Service Worker
 // Cache-first para assets estáticos; network-first para Supabase.
+// Atualizado em 2026-04-27 — incremente a versão a cada release para
+// invalidar o cache em todos os PWAs instalados.
 
-const CACHE_NAME = "fluxocomanda-v1";
+const CACHE_NAME = "fluxocomanda-v2";
 const STATIC_ASSETS = ["/", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -9,6 +11,13 @@ self.addEventListener("install", (event) => {
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).catch(() => {})
   );
   self.skipWaiting();
+});
+
+// Permite que a UI force a ativação imediata de uma nova versão
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {

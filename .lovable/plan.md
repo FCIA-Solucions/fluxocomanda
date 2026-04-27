@@ -1,53 +1,50 @@
+
 ## Objetivo
+Incrementar a versão do Service Worker para que **todos os celulares** que já instalaram o FluxoComanda como PWA recebam a versão nova automaticamente (limpando o cache antigo) na próxima vez que abrirem o app.
 
-Hoje só `blindadoemotivado@gmail.com` é tratado como admin pelo sistema. Vamos permitir que **vários e-mails** sejam superadmins (acesso liberado, sem cobrança e com acesso ao painel /admin), e que você possa **promover/rebaixar** outros usuários direto pela tela, sem mexer em SQL.
+## Como funciona
+O navegador detecta mudança no arquivo `sw.js` byte-a-byte. Mudando o nome do `CACHE_NAME` (de `fluxocomanda-v1` para `fluxocomanda-v2`):
+1. O SW antigo é considerado "obsoleto" → entra em fase de instalação do novo.
+2. `skipWaiting()` ativa o novo SW imediatamente.
+3. No `activate`, todos os caches que **não** se chamam `fluxocomanda-v2` são deletados (incluindo `fluxocomanda-v1` antigo).
+4. `clients.claim()` faz o novo SW assumir o controle das abas abertas sem precisar fechar/reabrir.
 
-## Como funciona hoje (resumo)
+## Mudanças
 
-- `useSubscription.tsx` libera bypass se `email == VITE_ADMIN_EMAIL` **ou** se `profiles.role == 'superadmin'`.
-- `Admin.tsx` (rota `/admin`) só deixa entrar quem tem `email == VITE_ADMIN_EMAIL`. Por isso, mesmo promovendo alguém a superadmin no banco, ele não consegue abrir o painel admin.
-- `ProtectedRoute` com `adminOnly` aceita `role in ('admin','superadmin')`.
+### 1. `public/sw.js`
+- Alterar `CACHE_NAME = "fluxocomanda-v1"` → `CACHE_NAME = "fluxocomanda-v2"`.
+- Adicionar comentário com a data da atualização para facilitar futuras revisões.
+- (Opcional, mas recomendado) Adicionar listener `message` que aceita `{ type: "SKIP_WAITING" }` — permite no futuro forçar update via botão na UI sem precisar fechar o app.
 
-## Mudanças propostas
+### 2. `src/main.tsx`
+- Adicionar, junto ao `register("/sw.js")`, um listener `updatefound` que recarrega a página automaticamente quando um SW novo termina de instalar e assume o controle. Isso garante que, mesmo se o usuário ficar com o app aberto, ele veja a versão nova após alguns segundos sem precisar reinstalar.
 
-### 1. `src/pages/Admin.tsx` — liberar entrada por role
-- Trocar a checagem `isAuthorized = email == ADMIN_EMAIL` por: **autorizado se** `email == ADMIN_EMAIL` **OU** `profiles.role == 'superadmin'`.
-- Buscar o `role` do próprio usuário antes de renderizar (curtinho, em paralelo ao load).
-- Adicionar nova coluna `role` no tipo `ProfileRow` (já existe no banco).
+```ts
+navigator.serviceWorker.register("/sw.js").then((reg) => {
+  reg.addEventListener("updatefound", () => {
+    const newSW = reg.installing;
+    if (!newSW) return;
+    newSW.addEventListener("statechange", () => {
+      if (newSW.state === "activated" && navigator.serviceWorker.controller) {
+        // Nova versão ativada — recarrega para pegar os assets novos
+        window.location.reload();
+      }
+    });
+  });
+});
+```
 
-### 2. `src/pages/Admin.tsx` — botão "Tornar admin" / "Remover admin"
-Em cada card de cliente, ao lado de "Definir plano" e "Desativar", incluir:
-- Se `role != 'superadmin'`: botão **"Tornar admin"** (ícone Shield) → faz `update profiles set role='superadmin' where id=...`.
-- Se `role == 'superadmin'`: badge roxo "Superadmin" + botão **"Remover admin"** → volta para `role='admin'` (dono normal).
-- Proteção: não deixar remover o admin do próprio e-mail mestre (`ADMIN_EMAIL`) nem rebaixar a si mesmo (evita travar o painel).
-- Toast de sucesso/erro e refresh do estado local.
+## O que o usuário vai ver
+- **Celular da esposa** (já com app aberto): ao abrir o app, ele detecta a nova versão, recarrega sozinho em ~2 segundos e passa a usar `v2`.
+- **Seu celular**: mesma coisa — abre o app, recarrega sozinho, e a regra do `superadmin` (que já está no código) passa a valer.
+- **Sem necessidade de desinstalar/reinstalar** o atalho.
 
-### 3. `src/pages/MeuNegocio.tsx` — mostrar status de acesso
-Adicionar um pequeno bloco no topo da página mostrando:
-- E-mail logado
-- Status: "Superadmin · acesso liberado", "Trial · X dias restantes", "Plano ativo até DD/MM", ou "Expirado · renovar".
+## Não faz parte deste plano
+- Não vou mexer no manifest, ícones, ou na lógica de assinatura — só na invalidação de cache.
+- Não vou registrar SW em ambiente de preview (continua bloqueado em iframe e em hosts `id-preview--` / `lovableproject.com`).
 
-Isso resolve a confusão do "no meu pede pagamento" — sua esposa vai ver na hora se está logada como admin ou outra conta. Arquivo já existe, só adicionar o card.
-
-### 4. SQL para você rodar no Supabase
-Já existe `SUPABASE_ADMIN_PROFILES_ACCESS.sql` que dá ao admin permissão de **ler** e **atualizar** todos os perfis. Mas a função `is_fcia_admin()` está hardcoded no e-mail `blindadoemotivado@gmail.com`. Vou gerar um novo arquivo `SUPABASE_MULTI_ADMIN.sql` que:
-- Substitui `is_fcia_admin()` por uma versão que retorna `true` se o usuário tem `role='superadmin'` OU é o e-mail mestre (fallback de segurança).
-- Mantém as policies existentes funcionando.
-- Vou exibir o SQL completo no chat para você copiar e rodar manualmente no SQL Editor (conforme sua regra de memória).
-
-### 5. Sem mudanças em
-- `useSubscription.tsx` — já aceita `role='superadmin'` corretamente.
-- `ProtectedRoute.tsx` — já aceita.
-- `.env` / `subscriptionConfig.ts` — `ADMIN_EMAIL` continua como fallback de emergência (nunca depender só dele).
-
-## Resultado para você
-
-1. Você abre `/admin` (continua funcionando com seu e-mail mestre).
-2. Acha o usuário da sua esposa (ou qualquer outro) na lista.
-3. Clica **"Tornar admin"** → ela vira superadmin instantaneamente.
-4. No próximo refresh do app dela, ela tem acesso liberado e também vê o painel `/admin`.
-
-## Observações
-
-- Não muda o fluxo de login (continua mesmo e-mail/senha funcionando em vários celulares — Supabase já permite).
-- Sobre o seu caso específico (você e sua esposa logados na mesma conta `blindadoemotivado@gmail.com` e só o seu pede pagamento): muito provavelmente é **cache do PWA antigo** no seu celular, anterior à regra do superadmin. Recomendo: feche o app, limpe os dados/cache do navegador desse atalho e reabra. Se preferir, posso também subir a versão do `sw.js` para forçar atualização em todos os dispositivos — me diga depois se quer.
+## Próximos passos depois de aplicar
+1. Aguardar o deploy concluir em `fluxocomanda.lovable.app`.
+2. Abrir o app instalado em cada celular **uma vez** (mesmo que dê para reusar o atalho na home).
+3. Em até 10 segundos, o app recarrega sozinho com a versão nova.
+4. Caso algum dispositivo demore (raro), basta fechar e abrir o app novamente.
