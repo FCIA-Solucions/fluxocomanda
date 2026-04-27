@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Loader2, Search, Shield, Power, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, Search, Shield, ShieldOff, Power, Calendar as CalendarIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ interface ProfileRow {
   subscription_status: string | null;
   trial_ends_at: string | null;
   subscription_expires_at: string | null;
-  role: "admin" | "garcom" | null;
+  role: "admin" | "garcom" | "superadmin" | null;
   created_at: string;
 }
 
@@ -106,9 +106,35 @@ export default function Admin() {
   const [editExpires, setEditExpires] = useState("");
   const [editTrial, setEditTrial] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  const isAuthorized =
+  const isMasterEmail =
     !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAuthorized = isMasterEmail || myRole === "superadmin";
+
+  // Carrega o role do próprio usuário para liberar acesso
+  useEffect(() => {
+    if (!user) {
+      setAuthChecked(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setMyRole((data?.role as string) ?? null);
+        setAuthChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const load = async () => {
     setLoading(true);
@@ -122,7 +148,7 @@ export default function Admin() {
       toast.error("Erro ao carregar clientes: " + error.message);
       setRows([]);
     } else {
-      // Mostrar só os donos (admin); ocultar garçons
+      // Mostrar só os donos (admin/superadmin); ocultar garçons
       setRows(((data ?? []) as ProfileRow[]).filter((r) => r.role !== "garcom"));
     }
     setLoading(false);
@@ -142,7 +168,7 @@ export default function Admin() {
     );
   }, [rows, search]);
 
-  if (authLoading) {
+  if (authLoading || (user && !authChecked)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -151,6 +177,40 @@ export default function Admin() {
   }
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAuthorized) return <Navigate to="/" replace />;
+
+  const toggleSuperadmin = async (row: ProfileRow) => {
+    const isSelf = row.id === user.id;
+    const isMaster =
+      !!row.email && row.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const willPromote = row.role !== "superadmin";
+
+    if (!willPromote && (isSelf || isMaster)) {
+      toast.error(
+        isMaster
+          ? "Não é possível remover admin do e-mail mestre"
+          : "Você não pode remover seu próprio acesso de admin"
+      );
+      return;
+    }
+
+    setSavingId(row.id);
+    const novaRole: "superadmin" | "admin" = willPromote ? "superadmin" : "admin";
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: novaRole })
+      .eq("id", row.id);
+    setSavingId(null);
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+    toast.success(
+      willPromote ? "Usuário promovido a admin" : "Acesso de admin removido"
+    );
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, role: novaRole } : r))
+    );
+  };
 
   const toggleAtivo = async (row: ProfileRow) => {
     setSavingId(row.id);
@@ -266,6 +326,9 @@ export default function Admin() {
                   ? formatDate(row.subscription_expires_at)
                   : formatDate(row.trial_ends_at);
               const ativo = isAtivo(row);
+              const isSuper = row.role === "superadmin";
+              const isMaster =
+                !!row.email && row.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
               return (
                 <div key={row.id} className="rounded-lg border bg-card p-4 shadow-sm">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -278,6 +341,12 @@ export default function Admin() {
                         <Badge variant="outline" className="capitalize">
                           {plano}
                         </Badge>
+                        {isSuper && (
+                          <Badge className="bg-purple-600 hover:bg-purple-600/90 text-white">
+                            <Shield className="mr-1 h-3 w-3" />
+                            Superadmin
+                          </Badge>
+                        )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground truncate">
                         {row.email || "—"}
@@ -295,6 +364,34 @@ export default function Admin() {
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         Definir plano
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={isSuper ? "outline" : "secondary"}
+                        onClick={() => toggleSuperadmin(row)}
+                        disabled={
+                          savingId === row.id ||
+                          (isSuper && (isMaster || row.id === user.id))
+                        }
+                        title={
+                          isSuper && isMaster
+                            ? "E-mail mestre — não pode ser removido"
+                            : isSuper && row.id === user.id
+                            ? "Você não pode remover seu próprio acesso"
+                            : undefined
+                        }
+                      >
+                        {isSuper ? (
+                          <>
+                            <ShieldOff className="mr-2 h-4 w-4" />
+                            Remover admin
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Tornar admin
+                          </>
+                        )}
                       </Button>
                       <Button
                         size="sm"

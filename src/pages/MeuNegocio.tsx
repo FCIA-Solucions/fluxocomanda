@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, Check, FileText, ChevronRight, Users, Lock, UserCircle2, Shield } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,13 @@ import { cn } from "@/lib/utils";
 export default function MeuNegocio() {
   const { user } = useAuth();
   const { role } = useProfile();
-  const { status } = useSubscription();
+  const { status, daysLeft, trialEndsAt, subscriptionExpiresAt } = useSubscription();
   const navigate = useNavigate();
   const { business, loading, refresh, setLocal } = useBusiness();
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "superadmin";
+  const isSuperadmin = role === "superadmin";
   const hasPaidPlan = status === "active";
 
   const [businessName, setBusinessName] = useState("");
@@ -106,6 +107,39 @@ export default function MeuNegocio() {
           </>
         }
       />
+
+      {/* Status do acesso */}
+      <section className="mb-4 rounded-2xl border border-border bg-card p-4">
+        <p className="text-xs text-muted-foreground">Logado como</p>
+        <p className="truncate text-sm font-semibold text-foreground">
+          {user?.email ?? "—"}
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          {isSuperadmin ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-600 px-2.5 py-1 text-xs font-semibold text-white">
+              <Shield className="h-3 w-3" /> Superadmin · acesso liberado
+            </span>
+          ) : status === "active" ? (
+            <span className="inline-flex items-center rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white">
+              Plano ativo
+              {subscriptionExpiresAt
+                ? ` · até ${subscriptionExpiresAt.toLocaleDateString("pt-BR")}`
+                : ""}
+            </span>
+          ) : status === "trial" ? (
+            <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-1 text-xs font-semibold text-white">
+              Trial · {daysLeft} {daysLeft === 1 ? "dia restante" : "dias restantes"}
+              {trialEndsAt
+                ? ` (até ${trialEndsAt.toLocaleDateString("pt-BR")})`
+                : ""}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-red-500 px-2.5 py-1 text-xs font-semibold text-white">
+              Expirado · renove para continuar
+            </span>
+          )}
+        </div>
+      </section>
 
       {loading ? (
         <div className="space-y-4">

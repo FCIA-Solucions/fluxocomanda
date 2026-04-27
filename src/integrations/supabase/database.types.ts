@@ -5,9 +5,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; name: string | null; email: string | null; business_name: string | null; logo_url: string | null; brand_color: string; subscription_status: string; subscription_expires_at: string | null; trial_ends_at: string | null; created_at: string; role: "admin" | "garcom"; owner_id: string | null };
-        Insert: { id: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; subscription_status?: string; subscription_expires_at?: string | null; trial_ends_at?: string | null; created_at?: string; role?: "admin" | "garcom"; owner_id?: string | null };
-        Update: { id?: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; subscription_status?: string; subscription_expires_at?: string | null; trial_ends_at?: string | null; created_at?: string; role?: "admin" | "garcom"; owner_id?: string | null };
+        Row: { id: string; name: string | null; email: string | null; business_name: string | null; logo_url: string | null; brand_color: string; subscription_status: string; subscription_expires_at: string | null; trial_ends_at: string | null; created_at: string; role: "admin" | "garcom" | "superadmin"; owner_id: string | null };
+        Insert: { id: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; subscription_status?: string; subscription_expires_at?: string | null; trial_ends_at?: string | null; created_at?: string; role?: "admin" | "garcom" | "superadmin"; owner_id?: string | null };
+        Update: { id?: string; name?: string | null; email?: string | null; business_name?: string | null; logo_url?: string | null; brand_color?: string; subscription_status?: string; subscription_expires_at?: string | null; trial_ends_at?: string | null; created_at?: string; role?: "admin" | "garcom" | "superadmin"; owner_id?: string | null };
         Relationships: [];
       };
       products: {
