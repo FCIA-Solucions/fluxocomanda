@@ -367,6 +367,34 @@ export default function Admin() {
                       </Button>
                       <Button
                         size="sm"
+                        variant={isSuper ? "outline" : "secondary"}
+                        onClick={() => toggleSuperadmin(row)}
+                        disabled={
+                          savingId === row.id ||
+                          (isSuper && (isMaster || row.id === user.id))
+                        }
+                        title={
+                          isSuper && isMaster
+                            ? "E-mail mestre — não pode ser removido"
+                            : isSuper && row.id === user.id
+                            ? "Você não pode remover seu próprio acesso"
+                            : undefined
+                        }
+                      >
+                        {isSuper ? (
+                          <>
+                            <ShieldOff className="mr-2 h-4 w-4" />
+                            Remover admin
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Tornar admin
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
                         variant={ativo ? "destructive" : "default"}
                         onClick={() => toggleAtivo(row)}
                         disabled={savingId === row.id}
