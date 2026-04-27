@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -68,6 +69,7 @@ const formatPriceInput = (digits: string) => {
 
 export default function Produtos() {
   const { user } = useAuth();
+  const { effectiveUserId } = useProfile();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -80,7 +82,7 @@ export default function Produtos() {
   const [saving, setSaving] = useState(false);
 
   const fetchProducts = useCallback(async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     setLoading(true);
 
     // Tenta buscar com a coluna 'categoria'. Se ela ainda não existir no banco,
@@ -88,14 +90,14 @@ export default function Produtos() {
     let { data, error } = await supabase
       .from("products")
       .select("id, name, price, active, categoria")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .order("created_at", { ascending: false });
 
     if (error && /categoria/i.test(error.message)) {
       const fallback = await supabase
         .from("products")
         .select("id, name, price, active")
-        .eq("user_id", user.id)
+        .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false });
       data = fallback.data as typeof data;
       error = fallback.error;
@@ -116,7 +118,7 @@ export default function Produtos() {
       );
     }
     setLoading(false);
-  }, [user]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     fetchProducts();
@@ -139,7 +141,10 @@ export default function Produtos() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !effectiveUserId) {
+      toast.error("Sessão inválida. Faça login novamente.");
+      return;
+    }
     if (!name.trim()) {
       toast.error("Informe o nome do produto");
       return;
@@ -171,11 +176,11 @@ export default function Produtos() {
     } else {
       let { error } = await supabase
         .from("products")
-        .insert({ user_id: user.id, name: name.trim(), price, active: true, categoria });
+        .insert({ user_id: effectiveUserId, name: name.trim(), price, active: true, categoria });
       if (error && /categoria/i.test(error.message)) {
         ({ error } = await supabase
           .from("products")
-          .insert({ user_id: user.id, name: name.trim(), price, active: true }));
+          .insert({ user_id: effectiveUserId, name: name.trim(), price, active: true }));
       }
       if (error) toast.error("Erro ao criar", { description: error.message });
       else {
