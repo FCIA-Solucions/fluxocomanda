@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search, MessageCircle } from "lucide-react";
+import { Search, MessageCircle, Download } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -84,8 +84,20 @@ export function HelpDrawer({ open, onOpenChange }: Props) {
           )}
         </ScrollArea>
 
-        <div className="border-t border-border bg-card/50 p-4">
-          <p className="mb-2 text-xs text-muted-foreground">
+        <div className="space-y-2 border-t border-border bg-card/50 p-4">
+          <Button asChild variant="outline" className="w-full">
+            <a
+              href="/FluxoComanda-Manual.pdf"
+              download="FluxoComanda-Manual.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Baixar manual em PDF
+            </a>
+          </Button>
+
+          <p className="pt-1 text-xs text-muted-foreground">
             Não encontrou o que procurava?
           </p>
           <Button
