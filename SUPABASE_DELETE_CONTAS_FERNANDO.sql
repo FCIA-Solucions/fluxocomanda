@@ -1,15 +1,11 @@
 -- =====================================================================
--- FluxoComanda: deletar contas de teste do Fernando
+-- FluxoComanda: deletar contas de teste
 --   - fernandocabraldafonseca@gmail.com
 --   - prof.fernndocabral@gmail.com
 --
--- COMO RODAR:
---   1. Supabase Dashboard → SQL Editor → New query
---   2. Cole este arquivo inteiro e execute
---
--- O DELETE em auth.users dispara CASCADE e remove o profile e todos
--- os dados ligados (comandas, produtos, clientes etc.) por causa das
--- foreign keys com ON DELETE CASCADE.
+-- Observação: nas tabelas de dados (orders, products, customers,
+-- cash_closures, sales) a coluna que liga ao dono é `user_id`.
+-- Apenas `profiles` tem `owner_id` (para garçons vinculados ao admin).
 -- =====================================================================
 
 -- 1) Conferir antes de apagar
@@ -20,7 +16,7 @@ where email in (
   'prof.fernndocabral@gmail.com'
 );
 
--- 2) Apagar dados de aplicação ligados ao owner (caso CASCADE não cubra tudo)
+-- 2) Apagar dados de aplicação ligados ao usuário
 do $$
 declare
   uid uuid;
@@ -32,17 +28,19 @@ begin
       'prof.fernndocabral@gmail.com'
     )
   loop
-    delete from public.cash_closures      where owner_id = uid or user_id = uid;
-    delete from public.order_items        where owner_id = uid;
-    delete from public.orders             where owner_id = uid or user_id = uid;
-    delete from public.products           where owner_id = uid or user_id = uid;
-    delete from public.customers          where owner_id = uid or user_id = uid;
-    delete from public.profiles           where owner_id = uid;
-    delete from public.profiles           where id = uid;
+    delete from public.order_items
+      where order_id in (select id from public.orders where user_id = uid);
+    delete from public.cash_closures where user_id = uid;
+    delete from public.sales         where user_id = uid;
+    delete from public.orders        where user_id = uid;
+    delete from public.products      where user_id = uid;
+    delete from public.customers     where user_id = uid;
+    delete from public.profiles      where owner_id = uid;
+    delete from public.profiles      where id = uid;
   end loop;
 end $$;
 
--- 3) Apagar o usuário do Auth (remove login)
+-- 3) Apagar o usuário do Auth (remove o login)
 delete from auth.users
 where email in (
   'fernandocabraldafonseca@gmail.com',
