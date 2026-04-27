@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -63,6 +64,7 @@ const toBusinessDay = (d: Date) => {
 
 export default function Caixa() {
   const { user } = useAuth();
+  const { effectiveUserId } = useProfile();
   const [loading, setLoading] = useState(true);
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [todayClosure, setTodayClosure] = useState<ClosureRow | null>(null);
@@ -72,7 +74,7 @@ export default function Caixa() {
   const todayBd = toBusinessDay(new Date());
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
     setLoading(true);
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -82,7 +84,7 @@ export default function Caixa() {
     const closureRes = await supabase
       .from("cash_closures")
       .select("id, closed_at, business_day, type, closed_by_name, total")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .eq("business_day", todayBd)
       .maybeSingle();
 
@@ -98,7 +100,7 @@ export default function Caixa() {
     const salesRes = await supabase
       .from("sales")
       .select("id, total, payment_method, created_at, order_id")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .gt("created_at", fromISO)
       .order("created_at", { ascending: false });
 
@@ -118,7 +120,7 @@ export default function Caixa() {
     setSales(rows.map((s) => ({ ...s, customer_name: s.order_id ? nameMap.get(s.order_id) ?? null : null })));
     setTodayClosure(closure);
     setLoading(false);
-  }, [user, todayBd]);
+  }, [effectiveUserId, todayBd]);
 
   // IMPORTANTE: removido qualquer fechamento automático de caixa/comanda.
   // Caixa e comandas só são fechados por ação manual do usuário.
@@ -132,7 +134,7 @@ export default function Caixa() {
   const totalCartao = sales.filter((s) => s.payment_method === "cartao").reduce((a, s) => a + Number(s.total ?? 0), 0);
 
   const handleClose = async () => {
-    if (!user) return;
+    if (!user || !effectiveUserId) return;
     setClosing(true);
 
     // Buscar nome do usuário no profile
@@ -144,7 +146,7 @@ export default function Caixa() {
     const closedByName = profRes.data?.name || user.email || "Operador";
 
     const { error } = await supabase.from("cash_closures").insert({
-      user_id: user.id,
+      user_id: effectiveUserId,
       business_day: todayBd,
       type: "manual",
       closed_by_name: closedByName,

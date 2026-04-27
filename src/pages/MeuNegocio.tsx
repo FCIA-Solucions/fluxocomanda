@@ -75,17 +75,24 @@ export default function MeuNegocio() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({
         business_name: businessName.trim() || null,
         logo_url: logoUrl,
         brand_color: brandColor,
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id");
     setSaving(false);
     if (error) {
       toast.error("Não foi possível salvar", { description: error.message });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast.error("Perfil não encontrado", {
+        description: "Sua conta não tem profile no banco. Rode o SQL SUPABASE_FIX_NEW_ACCOUNTS.sql.",
+      });
       return;
     }
     toast.success("Configurações salvas! ✅");

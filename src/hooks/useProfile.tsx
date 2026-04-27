@@ -37,11 +37,27 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setState((s) => ({ ...s, loading: true }));
-    const { data } = await supabase
+    let { data } = await supabase
       .from("profiles")
       .select("role, owner_id, email")
       .eq("id", user.id)
       .maybeSingle();
+
+    // Auto-cura: se o profile não existe (trigger não rodou), cria como admin
+    if (!data) {
+      const { data: created } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          email: user.email,
+          role: "admin",
+          owner_id: null,
+          trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select("role, owner_id, email")
+        .maybeSingle();
+      data = created;
+    }
 
     const role: AppRole = (data?.role as AppRole) ?? "admin";
     const ownerId = data?.owner_id ?? null;
