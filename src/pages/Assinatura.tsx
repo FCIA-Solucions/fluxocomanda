@@ -122,14 +122,13 @@ export default function Assinatura() {
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
           FluxoComanda é um produto{" "}
-          <span className="font-semibold" style={{ color: "#22c55e" }}>FCIA</span> ·{" "}
           <a
-            href="https://fcia.com.br"
+            href="https://fcia.lovable.app/desenvolvimento"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-foreground"
+            className="hover:text-foreground"
           >
-            fcia.com.br
+            by <span className="font-semibold" style={{ color: "#22c55e" }}>FCIA</span> - Soluções em Tecnologia
           </a>
         </p>
       </div>

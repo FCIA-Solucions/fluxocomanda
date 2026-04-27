@@ -36,7 +36,14 @@ export function SplashScreen({ onDone, duration = 2000 }: SplashScreenProps) {
         </h1>
       </div>
       <div className="pb-8 text-center text-xs text-slate-400">
-        by <span className="font-bold" style={{ color: "#22c55e" }}>FCIA</span>
+        <a
+          href="https://fcia.lovable.app/desenvolvimento"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          by <span className="font-bold" style={{ color: "#22c55e" }}>FCIA</span> - Soluções em Tecnologia
+        </a>
       </div>
     </div>
   );
