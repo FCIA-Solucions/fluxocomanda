@@ -1,50 +1,41 @@
+## Causa raiz
 
-## Objetivo
-Incrementar a versão do Service Worker para que **todos os celulares** que já instalaram o FluxoComanda como PWA recebam a versão nova automaticamente (limpando o cache antigo) na próxima vez que abrirem o app.
+O erro `new row violates row-level security policy for table "products"` e a personalização que "não salva" têm a mesma origem: a **conta nova não tem profile válido** (ou o profile foi criado sem `role`/`owner_id` corretos), então:
 
-## Como funciona
-O navegador detecta mudança no arquivo `sw.js` byte-a-byte. Mudando o nome do `CACHE_NAME` (de `fluxocomanda-v1` para `fluxocomanda-v2`):
-1. O SW antigo é considerado "obsoleto" → entra em fase de instalação do novo.
-2. `skipWaiting()` ativa o novo SW imediatamente.
-3. No `activate`, todos os caches que **não** se chamam `fluxocomanda-v2` são deletados (incluindo `fluxocomanda-v1` antigo).
-4. `clients.claim()` faz o novo SW assumir o controle das abas abertas sem precisar fechar/reabrir.
+- `public.effective_owner(auth.uid())` retorna `NULL`
+- O `INSERT` em `products` envia `user_id = user.id` mas a política RLS exige `user_id = effective_owner(auth.uid())` → `NULL ≠ user.id` → bloqueio.
+- O `UPDATE profiles WHERE id = user.id` simplesmente **não encontra a linha** e retorna 0 rows afetadas (sem erro) → a UI mostra "salvo ✅" mas nada mudou.
 
-## Mudanças
+Isso provavelmente foi causado pela migração `SUPABASE_MULTI_ADMIN.sql` que removeu o CHECK constraint de `role` mas o trigger `on_auth_user_created` (que cria o profile no signup) pode ter ficado quebrado, ou o profile dessa conta nova ficou sem `role`.
 
-### 1. `public/sw.js`
-- Alterar `CACHE_NAME = "fluxocomanda-v1"` → `CACHE_NAME = "fluxocomanda-v2"`.
-- Adicionar comentário com a data da atualização para facilitar futuras revisões.
-- (Opcional, mas recomendado) Adicionar listener `message` que aceita `{ type: "SKIP_WAITING" }` — permite no futuro forçar update via botão na UI sem precisar fechar o app.
+## Plano
 
-### 2. `src/main.tsx`
-- Adicionar, junto ao `register("/sw.js")`, um listener `updatefound` que recarrega a página automaticamente quando um SW novo termina de instalar e assume o controle. Isso garante que, mesmo se o usuário ficar com o app aberto, ele veja a versão nova após alguns segundos sem precisar reinstalar.
+### 1. SQL para diagnóstico e correção (arquivo `SUPABASE_FIX_NEW_ACCOUNTS.sql`)
 
-```ts
-navigator.serviceWorker.register("/sw.js").then((reg) => {
-  reg.addEventListener("updatefound", () => {
-    const newSW = reg.installing;
-    if (!newSW) return;
-    newSW.addEventListener("statechange", () => {
-      if (newSW.state === "activated" && navigator.serviceWorker.controller) {
-        // Nova versão ativada — recarrega para pegar os assets novos
-        window.location.reload();
-      }
-    });
-  });
-});
-```
+- Recriar/garantir o trigger `handle_new_user` que insere em `profiles` com `role='admin'`, `owner_id=NULL`, `email` e `trial_ends_at = now()+7d` quando um usuário é criado em `auth.users`.
+- Fazer um `INSERT ... ON CONFLICT DO NOTHING` retroativo para criar profiles em todos os `auth.users` que não têm linha em `profiles`.
+- Fazer `UPDATE profiles SET role='admin' WHERE role IS NULL OR role NOT IN ('admin','garcom','superadmin')` para corrigir profiles existentes.
+- Reafirmar o CHECK constraint em `role` aceitando os 3 valores.
+- Mostrar o SQL no chat para o usuário rodar no SQL Editor.
 
-## O que o usuário vai ver
-- **Celular da esposa** (já com app aberto): ao abrir o app, ele detecta a nova versão, recarrega sozinho em ~2 segundos e passa a usar `v2`.
-- **Seu celular**: mesma coisa — abre o app, recarrega sozinho, e a regra do `superadmin` (que já está no código) passa a valer.
-- **Sem necessidade de desinstalar/reinstalar** o atalho.
+### 2. Código defensivo
 
-## Não faz parte deste plano
-- Não vou mexer no manifest, ícones, ou na lógica de assinatura — só na invalidação de cache.
-- Não vou registrar SW em ambiente de preview (continua bloqueado em iframe e em hosts `id-preview--` / `lovableproject.com`).
+- **`src/pages/Produtos.tsx`**: trocar `user_id: user.id` por `user_id: effectiveUserId` nos 2 inserts (linhas 174 e 178), e usar `effectiveUserId` também nos selects (linhas 91 e 98) — assim garçons também enxergam os produtos do dono.
+- **`src/pages/Caixa.tsx`**: trocar `user_id: user.id` (linha 147) e os filtros `eq("user_id", user.id)` (linhas 85, 101) por `effectiveUserId`. Manter o `eq("id", user.id)` da linha 142 que busca o profile do próprio usuário.
+- **`src/pages/MeuNegocio.tsx`** (`handleSave`): após o `update`, checar se retornou alguma linha (`.select()`) — se 0 linhas, mostrar erro claro "Perfil não encontrado, rode o SQL de correção" em vez de "salvo ✅" enganoso. E mostrar o `error?.message` real.
+- **`src/hooks/useProfile.tsx`**: se o `select` em `profiles` retornar `null` (profile não existe), tentar criar via `insert` com `role='admin'` e os defaults — fallback de auto-cura do lado do cliente.
 
-## Próximos passos depois de aplicar
-1. Aguardar o deploy concluir em `fluxocomanda.lovable.app`.
-2. Abrir o app instalado em cada celular **uma vez** (mesmo que dê para reusar o atalho na home).
-3. Em até 10 segundos, o app recarrega sozinho com a versão nova.
-4. Caso algum dispositivo demore (raro), basta fechar e abrir o app novamente.
+### 3. Validação
+
+Após rodar o SQL e o código atualizado:
+- Logar com a conta nova → o `useProfile` deve carregar `role='admin'` e `effectiveUserId = user.id`.
+- Personalizar Meu Negócio → toast "Configurações salvas" e os dados persistirem após reload.
+- Criar um produto → sem erro de RLS.
+
+### Arquivos afetados
+
+- `SUPABASE_FIX_NEW_ACCOUNTS.sql` (novo)
+- `src/pages/Produtos.tsx`
+- `src/pages/Caixa.tsx`
+- `src/pages/MeuNegocio.tsx`
+- `src/hooks/useProfile.tsx`
