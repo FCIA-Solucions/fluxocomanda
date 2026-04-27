@@ -168,7 +168,7 @@ export default function Admin() {
     );
   }, [rows, search]);
 
-  if (authLoading) {
+  if (authLoading || (user && !authChecked)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -177,6 +177,40 @@ export default function Admin() {
   }
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAuthorized) return <Navigate to="/" replace />;
+
+  const toggleSuperadmin = async (row: ProfileRow) => {
+    const isSelf = row.id === user.id;
+    const isMaster =
+      !!row.email && row.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const willPromote = row.role !== "superadmin";
+
+    if (!willPromote && (isSelf || isMaster)) {
+      toast.error(
+        isMaster
+          ? "Não é possível remover admin do e-mail mestre"
+          : "Você não pode remover seu próprio acesso de admin"
+      );
+      return;
+    }
+
+    setSavingId(row.id);
+    const novaRole: "superadmin" | "admin" = willPromote ? "superadmin" : "admin";
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: novaRole })
+      .eq("id", row.id);
+    setSavingId(null);
+    if (error) {
+      toast.error("Erro: " + error.message);
+      return;
+    }
+    toast.success(
+      willPromote ? "Usuário promovido a admin" : "Acesso de admin removido"
+    );
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, role: novaRole } : r))
+    );
+  };
 
   const toggleAtivo = async (row: ProfileRow) => {
     setSavingId(row.id);
