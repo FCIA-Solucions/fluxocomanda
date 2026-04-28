@@ -142,7 +142,7 @@ export default function NovaComanda() {
             />
           )}
           <p className="text-xs text-muted-foreground">
-            Digite ao menos 2 letras para buscar clientes cadastrados.
+            Digite o nome ou mesa. Você pode cadastrar como cliente ou abrir direto sem cadastro.
           </p>
         </div>
         <Button

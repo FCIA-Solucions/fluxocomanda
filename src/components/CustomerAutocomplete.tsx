@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, UserPlus, X } from "lucide-react";
+import { Check, Loader2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -225,6 +225,17 @@ export function CustomerAutocomplete({
                 )}
               </button>
             ))}
+          <button
+            type="button"
+            onClick={() => {
+              onSelect(null);
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm font-medium text-foreground hover:bg-muted/60"
+          >
+            <Check className="h-4 w-4 text-primary" />
+            Usar "{text.trim()}" sem cadastrar
+          </button>
           <button
             type="button"
             onClick={openCreateDialog}
