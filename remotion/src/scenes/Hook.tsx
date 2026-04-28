@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, Img, staticFile } from "remotion";
 import { colors, fontFamily } from "../theme";
 
 // 0-4s = 120 frames. Hook: papel rasgando -> celular sobe.
@@ -93,12 +93,10 @@ export const Hook: React.FC = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: colors.primary,
-            fontSize: 60,
-            fontWeight: 800,
+            padding: 30,
           }}
         >
-          ✓
+          <Img src={staticFile("logo.png")} style={{ width: "100%", height: "auto" }} />
         </div>
       )}
     </AbsoluteFill>
