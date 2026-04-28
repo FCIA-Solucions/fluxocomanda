@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, Img, staticFile } from "remotion";
 import { colors, fontFamily } from "../theme";
 
 // 4s-9s = 150 frames. Logo + tagline.
@@ -20,21 +20,19 @@ export const Logo: React.FC = () => {
   return (
     <AbsoluteFill style={{ fontFamily, alignItems: "center", justifyContent: "center", padding: 80 }}>
       {/* logo mark */}
-      <div style={{ position: "relative", width: 220, height: 220, marginBottom: 30 }}>
+      <div style={{ position: "relative", width: 280, height: 280, marginBottom: 30 }}>
         <div
           style={{
             position: "absolute",
             inset: 0,
-            borderRadius: 56,
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
             transform: `scale(${logoScale * pulse})`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: `0 20px 60px ${colors.primary}66`,
+            filter: `drop-shadow(0 20px 60px ${colors.primary}66)`,
           }}
         >
-          <span style={{ fontSize: 130, fontWeight: 800, color: "#fff", lineHeight: 1 }}>F</span>
+          <Img src={staticFile("logo.png")} style={{ width: "100%", height: "100%" }} />
         </div>
         {/* expanding ring */}
         <div

@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, Img, staticFile } from "remotion";
 import { colors, fontFamily } from "../theme";
 
 // 7s = 210 frames. CTA final.
@@ -28,19 +28,17 @@ export const CTA: React.FC = () => {
       {/* logo */}
       <div
         style={{
-          width: 160,
-          height: 160,
-          borderRadius: 40,
-          background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+          width: 200,
+          height: 200,
           transform: `scale(${logoSc})`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: `0 18px 50px ${colors.primary}66`,
-          marginBottom: 30,
+          filter: `drop-shadow(0 18px 50px ${colors.primary}66)`,
+          marginBottom: 24,
         }}
       >
-        <span style={{ fontSize: 96, fontWeight: 800, color: "#fff", lineHeight: 1 }}>F</span>
+        <Img src={staticFile("logo.png")} style={{ width: "100%", height: "100%" }} />
       </div>
 
       <h1
