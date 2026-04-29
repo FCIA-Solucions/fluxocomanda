@@ -34,8 +34,8 @@ export const FciaOutro: React.FC = () => {
 
   // Subtle continuous breathing
   const breathe = 1 + Math.sin(frame / 22) * 0.012;
-  // Subtle float
-  const floatY = Math.sin(frame / 28) * 6;
+  // Subtle float (reduced amplitude to avoid jump perception in 1:1)
+  const floatY = Math.sin(frame / 28) * 3;
 
   // Glow pulse
   const glowPulse = 0.55 + Math.sin(frame / 18) * 0.25;
@@ -44,7 +44,7 @@ export const FciaOutro: React.FC = () => {
   const ring1 = spring({ frame: frame - 6, fps, config: { damping: 18 } });
   const ring2 = spring({ frame: frame - 14, fps, config: { damping: 18 } });
 
-  // Slogan reveal — fade + slide + letter-spacing collapse
+  // Slogan reveal — fade + small slide + scale/blur (no layout reflow)
   const sloganStart = 36;
   const sloganOp = interpolate(frame, [sloganStart, sloganStart + 24], [0, 1], {
     extrapolateLeft: "clamp",
@@ -52,26 +52,32 @@ export const FciaOutro: React.FC = () => {
   });
   const sloganY = interpolate(
     frame,
-    [sloganStart, sloganStart + 30],
-    [22, 0],
+    [sloganStart, sloganStart + 18],
+    [10, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
-  const sloganSpacing = interpolate(
+  const sloganScale = interpolate(
     frame,
-    [sloganStart, sloganStart + 40],
-    [18, 6],
+    [sloganStart, sloganStart + 22],
+    [0.96, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const sloganBlur = interpolate(
+    frame,
+    [sloganStart, sloganStart + 22],
+    [6, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
   // Underline draw
-  const lineStart = 60;
+  const lineStart = 56;
   const lineScale = interpolate(frame, [lineStart, lineStart + 30], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // Brand line "FCIA — Soluções em Tecnologia" later reveal
-  const brandStart = 78;
+  const brandStart = 72;
   const brandOp = interpolate(frame, [brandStart, brandStart + 24], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -148,7 +154,7 @@ export const FciaOutro: React.FC = () => {
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
-          gap: isSquare ? 24 : 30,
+          gap: isSquare ? 18 : 30,
           padding: 60,
         }}
       >
@@ -231,8 +237,10 @@ export const FciaOutro: React.FC = () => {
             flexDirection: "column",
             alignItems: "center",
             gap: 14,
+            width: "92%",
             opacity: sloganOp,
             transform: `translateY(${sloganY}px)`,
+            filter: "drop-shadow(0 0 30px rgba(139,92,246,0.45))",
           }}
         >
           <h1
@@ -240,16 +248,19 @@ export const FciaOutro: React.FC = () => {
               margin: 0,
               fontSize: isSquare ? 64 : 72,
               fontWeight: 300,
-              letterSpacing: sloganSpacing,
+              letterSpacing: isSquare ? 8 : 10,
               color: "#F8FAFC",
               textTransform: "uppercase",
               textAlign: "center",
+              width: "100%",
               background:
                 "linear-gradient(180deg, #ffffff 0%, #c4b5fd 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
-              textShadow: "0 0 40px rgba(139,92,246,0.5)",
+              transform: `scale(${sloganScale})`,
+              transformOrigin: "center",
+              filter: `blur(${sloganBlur}px)`,
             }}
           >
             Soluções <span style={{ fontWeight: 700 }}>Inteligentes</span>
