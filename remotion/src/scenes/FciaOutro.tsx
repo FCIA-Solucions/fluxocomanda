@@ -154,7 +154,7 @@ export const FciaOutro: React.FC = () => {
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
-          gap: isSquare ? 24 : 30,
+          gap: isSquare ? 18 : 30,
           padding: 60,
         }}
       >
