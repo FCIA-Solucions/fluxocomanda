@@ -44,7 +44,7 @@ export const FciaOutro: React.FC = () => {
   const ring1 = spring({ frame: frame - 6, fps, config: { damping: 18 } });
   const ring2 = spring({ frame: frame - 14, fps, config: { damping: 18 } });
 
-  // Slogan reveal — fade + slide + letter-spacing collapse
+  // Slogan reveal — fade + small slide + scale/blur (no layout reflow)
   const sloganStart = 36;
   const sloganOp = interpolate(frame, [sloganStart, sloganStart + 24], [0, 1], {
     extrapolateLeft: "clamp",
@@ -52,26 +52,32 @@ export const FciaOutro: React.FC = () => {
   });
   const sloganY = interpolate(
     frame,
-    [sloganStart, sloganStart + 30],
-    [22, 0],
+    [sloganStart, sloganStart + 18],
+    [10, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
-  const sloganSpacing = interpolate(
+  const sloganScale = interpolate(
     frame,
-    [sloganStart, sloganStart + 40],
-    [18, 6],
+    [sloganStart, sloganStart + 22],
+    [0.96, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const sloganBlur = interpolate(
+    frame,
+    [sloganStart, sloganStart + 22],
+    [6, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
   // Underline draw
-  const lineStart = 60;
+  const lineStart = 56;
   const lineScale = interpolate(frame, [lineStart, lineStart + 30], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // Brand line "FCIA — Soluções em Tecnologia" later reveal
-  const brandStart = 78;
+  const brandStart = 72;
   const brandOp = interpolate(frame, [brandStart, brandStart + 24], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
