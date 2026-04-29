@@ -237,8 +237,10 @@ export const FciaOutro: React.FC = () => {
             flexDirection: "column",
             alignItems: "center",
             gap: 14,
+            width: "92%",
             opacity: sloganOp,
             transform: `translateY(${sloganY}px)`,
+            filter: "drop-shadow(0 0 30px rgba(139,92,246,0.45))",
           }}
         >
           <h1
@@ -246,16 +248,19 @@ export const FciaOutro: React.FC = () => {
               margin: 0,
               fontSize: isSquare ? 64 : 72,
               fontWeight: 300,
-              letterSpacing: sloganSpacing,
+              letterSpacing: isSquare ? 8 : 10,
               color: "#F8FAFC",
               textTransform: "uppercase",
               textAlign: "center",
+              width: "100%",
               background:
                 "linear-gradient(180deg, #ffffff 0%, #c4b5fd 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
-              textShadow: "0 0 40px rgba(139,92,246,0.5)",
+              transform: `scale(${sloganScale})`,
+              transformOrigin: "center",
+              filter: `blur(${sloganBlur}px)`,
             }}
           >
             Soluções <span style={{ fontWeight: 700 }}>Inteligentes</span>
