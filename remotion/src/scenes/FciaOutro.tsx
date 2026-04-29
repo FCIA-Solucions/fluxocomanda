@@ -34,8 +34,8 @@ export const FciaOutro: React.FC = () => {
 
   // Subtle continuous breathing
   const breathe = 1 + Math.sin(frame / 22) * 0.012;
-  // Subtle float
-  const floatY = Math.sin(frame / 28) * 6;
+  // Subtle float (reduced amplitude to avoid jump perception in 1:1)
+  const floatY = Math.sin(frame / 28) * 3;
 
   // Glow pulse
   const glowPulse = 0.55 + Math.sin(frame / 18) * 0.25;
