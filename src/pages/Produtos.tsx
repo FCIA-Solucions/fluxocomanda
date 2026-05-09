@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Plus, Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
