@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark, Search, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -121,6 +121,7 @@ export default function ComandaDetalhe() {
 
   // Filtro de categoria no cardápio
   const [filterCat, setFilterCat] = useState<"all" | Categoria>("all");
+  const [productSearch, setProductSearch] = useState("");
 
   const { business } = useBusiness();
 
@@ -633,16 +634,42 @@ export default function ComandaDetalhe() {
                 </button>
               </p>
             ) : (() => {
-              const filtered = filterCat === "all"
+              const q = productSearch.trim().toLowerCase();
+              const byCat = filterCat === "all"
                 ? products
                 : products.filter((p) => p.categoria === filterCat);
-              if (filtered.length === 0) {
-                return (
-                  <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
-                    Nenhum produto nesta categoria.
-                  </p>
-                );
-              }
+              const filtered = q
+                ? byCat.filter((p) => p.name.toLowerCase().includes(q))
+                : byCat;
+              return (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="Buscar produto..."
+                      className="h-11 pl-9 pr-9"
+                    />
+                    {productSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setProductSearch("")}
+                        aria-label="Limpar busca"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {filtered.length === 0 ? (
+                    <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
+                      {q ? `Nenhum produto encontrado para "${productSearch}".` : "Nenhum produto nesta categoria."}
+                    </p>
+                  ) : (
+              </>
+              );
+            })()}
               return (
                 <div className="grid grid-cols-2 gap-3">
                   {filtered.map((p) => (
