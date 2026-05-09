@@ -267,9 +267,15 @@ export default function Produtos() {
             Toque em + para adicionar.
           </p>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground">
+            Nenhum produto encontrado para "{search}".
+          </p>
+        </div>
       ) : (
         <ul className="space-y-3">
-          {products.map((p) => (
+          {filteredProducts.map((p) => (
             <li
               key={p.id}
               className="flex items-center gap-3 rounded-2xl bg-card p-4"
