@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Plus, Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
@@ -80,6 +80,13 @@ export default function Produtos() {
   const [priceDigits, setPriceDigits] = useState(""); // só dígitos (centavos)
   const [categoria, setCategoria] = useState<Categoria>("outros");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, search]);
 
   const fetchProducts = useCallback(async () => {
     if (!effectiveUserId) return;
@@ -226,6 +233,26 @@ export default function Produtos() {
     <AppShell>
       <PageHeader title="Produtos" />
 
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar produto..."
+          className="h-12 pl-9 pr-9"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            aria-label="Limpar busca"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -240,9 +267,15 @@ export default function Produtos() {
             Toque em + para adicionar.
           </p>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground">
+            Nenhum produto encontrado para "{search}".
+          </p>
+        </div>
       ) : (
         <ul className="space-y-3">
-          {products.map((p) => (
+          {filteredProducts.map((p) => (
             <li
               key={p.id}
               className="flex items-center gap-3 rounded-2xl bg-card p-4"
