@@ -667,25 +667,23 @@ export default function ComandaDetalhe() {
                       {q ? `Nenhum produto encontrado para "${productSearch}".` : "Nenhum produto nesta categoria."}
                     </p>
                   ) : (
-              </>
-              );
-            })()}
-              return (
-                <div className="grid grid-cols-2 gap-3">
-                  {filtered.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => addProduct(p)}
-                      className={cn(
-                        "rounded-2xl bg-card p-4 text-left transition-all active:scale-[0.97]",
-                        highlightId === p.id && "ring-2 ring-primary bg-primary/10"
-                      )}
-                    >
-                      <p className="line-clamp-2 text-sm font-semibold text-foreground">{p.name}</p>
-                      <p className="mt-1 text-sm font-bold text-primary">{brl.format(Number(p.price))}</p>
-                    </button>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {filtered.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => addProduct(p)}
+                          className={cn(
+                            "rounded-2xl bg-card p-4 text-left transition-all active:scale-[0.97]",
+                            highlightId === p.id && "ring-2 ring-primary bg-primary/10"
+                          )}
+                        >
+                          <p className="line-clamp-2 text-sm font-semibold text-foreground">{p.name}</p>
+                          <p className="mt-1 text-sm font-bold text-primary">{brl.format(Number(p.price))}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               );
             })()}
           </section>
