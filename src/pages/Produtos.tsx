@@ -80,6 +80,13 @@ export default function Produtos() {
   const [priceDigits, setPriceDigits] = useState(""); // só dígitos (centavos)
   const [categoria, setCategoria] = useState<Categoria>("outros");
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, search]);
 
   const fetchProducts = useCallback(async () => {
     if (!effectiveUserId) return;
