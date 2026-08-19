@@ -884,7 +884,8 @@ export default function ComandaDetalhe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppShell>
+      </AppShell>
+    </div>
   );
 }
 
