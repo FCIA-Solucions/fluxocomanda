@@ -304,6 +304,7 @@ export type Database = {
         Returns: Json
       }
       is_fcia_admin: { Args: never; Returns: boolean }
+      is_master_account: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
