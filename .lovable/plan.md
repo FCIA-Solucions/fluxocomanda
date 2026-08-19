@@ -1,54 +1,106 @@
-## Problema identificado no `fcia-outro-1x1.mp4`
+# Plano de Reconstrução: FluxoComanda v1.1
 
-Ao revisar `remotion/src/scenes/FciaOutro.tsx`, encontrei duas causas do "salto" e da "mudança de perspectiva" do slogan no formato 1:1:
+O objetivo é recriar o backend do FluxoComanda em um novo projeto Supabase, garantindo isolamento multi-tenant (`business_id`) e todas as funcionalidades da versão 1.1 documentada.
 
-1. **Salto do slogan (jump visual)**
-   - `sloganY` anima de `22 → 0` entre os frames 36 e 66.
-   - `sloganSpacing` (letter-spacing) anima de `18px → 6px` entre os frames 36 e 76.
-   - Como o `letter-spacing` muda **a largura do bloco de texto** enquanto o container está centralizado com `justifyContent: center` + `flexDirection: column` + `gap`, o texto "respira" horizontalmente e parece dar um leve salto/escorregão. No 1:1 isso fica mais perceptível porque o logo ocupa proporcionalmente mais espaço e qualquer reflow do bloco de slogan empurra os elementos vizinhos.
-   - Além disso, a `linha sublinhada` aparece no frame 60 com `scaleX` saindo do centro — combinada com o spacing ainda mudando até o frame 76, dá a sensação de "perspectiva mudando".
+## 🏗️ Estrutura do Banco de Dados (PostgreSQL)
 
-2. **"Mudança de perspectiva" do slogan**
-   - O `<h1>` usa `background: linear-gradient(...) + WebkitBackgroundClip: text` **junto com** `textShadow`. No Chromium headless do render, quando o letter-spacing está animando, o gradient-clip recalcula a cada frame e o `textShadow` (que não é clipado) cria um halo que se desloca em relação ao texto — parece que o texto muda de inclinação/perspectiva.
-   - A `<p>` "FCIA · Soluções em Tecnologia" entra no frame 78, exatamente quando o spacing do título ainda está terminando de animar (frame 76). Esses dois eventos quase simultâneos somam o efeito de "tudo mexendo de uma vez".
+### Tabelas a serem criadas/validadas:
 
-O 16:9 sofre menos porque há mais largura disponível e o reflow horizontal do bloco fica menos evidente.
+1.  **`profiles`**:
+    *   `id`: UUID (PK, auth.users)
+    *   `name`: TEXT
+    *   `email`: TEXT
+    *   `business_name`: TEXT
+    *   `logo_url`: TEXT
+    *   `brand_color`: TEXT (default #22c55e)
+    *   `role`: TEXT (admin, garcom, superadmin)
+    *   `subscription_status`: TEXT (trial, active, expired, vitalicio)
+    *   `subscription_expires_at`: TIMESTAMPTZ
+    *   `trial_ends_at`: TIMESTAMPTZ
+    *   `created_at`: TIMESTAMPTZ
 
-## Correção proposta (apenas no `FciaOutro.tsx`)
+2.  **`products`**:
+    *   `id`: UUID (PK)
+    *   `user_id`: UUID (FK auth.users - dono do negócio)
+    *   `business_id`: UUID (Isolamento)
+    *   `name`: TEXT
+    *   `price`: NUMERIC
+    *   `categoria`: TEXT (bebidas, comidas, outros)
+    *   `active`: BOOLEAN
+    *   `created_at`: TIMESTAMPTZ
 
-1. **Eliminar o reflow horizontal do slogan**
-   - Remover a animação de `letter-spacing` (`sloganSpacing`) e fixar em um valor estático (ex.: `8px` no 1:1, `10px` no 16:9).
-   - Substituir o efeito de "abrir letras" por uma animação que **não muda o layout**: leve `scale` (0.96 → 1) + `filter: blur(6px → 0)` no h1, mantendo a largura constante.
+3.  **`customers`**:
+    *   `id`: UUID (PK)
+    *   `user_id`: UUID (FK auth.users)
+    *   `business_id`: UUID
+    *   `nome`: TEXT
+    *   `apelido`: TEXT
+    *   `whatsapp`: TEXT
+    *   `created_at`: TIMESTAMPTZ
 
-2. **Estabilizar a posição vertical**
-   - Reduzir `sloganY` de `22 → 0` para `10 → 0` e encurtar a duração (frame 36 a 54), terminando antes do underline aparecer.
-   - Definir `width` fixo no container do slogan (ex.: `90%`) com `textAlign: center`, para que o bloco não dependa da largura intrínseca do texto.
+4.  **`orders`** (Comandas):
+    *   `id`: UUID (PK)
+    *   `user_id`: UUID
+    *   `business_id`: UUID
+    *   `customer_id`: UUID (FK customers)
+    *   `customer_name`: TEXT (fallback)
+    *   `customer_phone`: TEXT (para comprovante WhatsApp)
+    *   `status`: TEXT (open, closed, guardada)
+    *   `total`: NUMERIC
+    *   `payment_method`: TEXT (dinheiro, pix, cartao)
+    *   `created_at`: TIMESTAMPTZ
+    *   `closed_at`: TIMESTAMPTZ
+    *   `guardada_em`: TIMESTAMPTZ
+    *   `guardada_obs`: TEXT
 
-3. **Reduzir o "halo" do gradient-clip**
-   - Remover o `textShadow` do h1 (mantendo apenas o gradiente de cor). Opcional: aplicar um `drop-shadow` discreto no container externo para preservar o glow sem deformar o texto.
+5.  **`order_items`**:
+    *   `id`: UUID (PK)
+    *   `order_id`: UUID (FK orders)
+    *   `product_id`: UUID (FK products)
+    *   `product_name`: TEXT
+    *   `quantity`: INTEGER
+    *   `unit_price`: NUMERIC
+    *   `subtotal`: NUMERIC
 
-4. **Reescalonar timings para o quadrado**
-   - Antecipar levemente o underline (`lineStart: 60 → 56`) e o brand line (`brandStart: 78 → 72`) para que toda a sequência do slogan termine de forma coesa, sem sobreposições com micro-animações ainda em curso.
+6.  **`sales`**:
+    *   `id`: UUID (PK)
+    *   `user_id`: UUID
+    *   `business_id`: UUID
+    *   `order_id`: UUID (FK orders)
+    *   `total`: NUMERIC
+    *   `payment_method`: TEXT
+    *   `created_at`: TIMESTAMPTZ
 
-5. **Ajuste fino específico do 1:1**
-   - Reduzir o `gap` do container central no quadrado (de `24` para `18`) para evitar que o slogan caia muito perto da borda inferior quando o logo aplica o `floatY` sinusoidal.
-   - Reduzir levemente a amplitude do `floatY` (de `±6px` para `±3px`) — o float do logo também contribui para a sensação de "salto" no quadrado.
+7.  **`cash_closures`**:
+    *   `id`: UUID (PK)
+    *   `user_id`: UUID
+    *   `business_id`: UUID
+    *   `closed_at`: TIMESTAMPTZ
+    *   `business_day`: DATE
+    *   `total`: NUMERIC
+    *   `sales_count`: INTEGER
 
-## Renderização
+## 🔐 Segurança e Lógica
 
-Após aplicar as correções, re-renderizar **apenas o 1:1** para validar:
+*   **RLS (Row Level Security)**: Habilitado em todas as tabelas. Filtro por `business_id` ou `user_id`.
+*   **RPC `fechar_comanda`**: Transação atômica que:
+    1.  Valida `auth.uid()`.
+    2.  Dá lock `FOR UPDATE` na comanda.
+    3.  Calcula total via `order_items`.
+    4.  Cria registro em `sales`.
+    5.  Atualiza `orders` para `status = 'closed'`.
+*   **Triggers**: `handle_new_user` para criar profile automático com 7 dias de trial.
+*   **Storage**: Bucket `logos` (público) com RLS para upload apenas na pasta do próprio `auth.uid()`.
 
-```
-cd remotion && node scripts/render-outro.mjs --only=outro-square
-```
+## 📂 Arquivos SQL Utilizados
+1.  `SUPABASE_SETUP.sql` (Base)
+2.  `SUPABASE_RPC_FECHAR_COMANDA.sql` (Lógica de fechamento)
+3.  `SUPABASE_MIGRATION_SUBSCRIPTION.sql` (Assinaturas)
+4.  `SUPABASE_CUSTOMERS_INTEGRATION.sql` (Clientes)
+5.  `SUPABASE_CASH_CLOSURES.sql` (Caixa)
+6.  `SUPABASE_ADD_PRODUCTS_CATEGORIA.sql` (Categorias)
+7.  `SUPABASE_MULTI_ADMIN.sql` (Superadmin/Roles)
+8.  `SUPABASE_FIX_PROFILES_AND_LOGOS.sql` (Storage e campos extras)
 
-Se o script atual não suportar flag de seleção, ajustar o `render-outro.mjs` para aceitar argumento `--only` e renderizar somente `outro-square`, salvando em `/mnt/documents/fcia-outro-1x1.mp4` (sobrescrevendo). O 16:9 não precisa ser re-renderizado, mas as mesmas mudanças beneficiam a versão wide também — opcionalmente regerar ambos.
-
-## Arquivos afetados
-
-- `remotion/src/scenes/FciaOutro.tsx` — ajustes de animação descritos acima
-- `remotion/scripts/render-outro.mjs` — (se necessário) suporte a renderizar uma única composição
-
-## Entregável
-
-- `fcia-outro-1x1.mp4` atualizado em `/mnt/documents/`, sem salto do slogan e sem variação de perspectiva durante o reveal.
+---
+*O próximo passo será a execução do SQL consolidado no Supabase.*
