@@ -535,6 +535,18 @@ export default function ComandaDetalhe() {
               </Badge>
             </div>
           }
+          right={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              disabled={loading || items.length === 0}
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Imprimir</span>
+            </Button>
+          }
         />
 
         <div className="mb-6 rounded-2xl bg-card p-5 text-center">
