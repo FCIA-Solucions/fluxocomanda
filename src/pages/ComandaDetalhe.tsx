@@ -169,9 +169,9 @@ export default function ComandaDetalhe() {
     if (orderRes.data.customer_id) {
       const { data: cust } = await supabase
         .from("customers")
-        .select("name, whatsapp")
+        .select("nome, whatsapp")
         .eq("id", orderRes.data.customer_id)
-        .maybeSingle();
+        .maybeSingle() as any;
       if (cust) setCustomerInfo({ name: cust.nome, whatsapp: cust.whatsapp });
     }
 

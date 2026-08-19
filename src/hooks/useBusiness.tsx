@@ -51,7 +51,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
       .from("profiles")
       .select("business_name, logo_url, brand_color, printer_width")
       .eq("id", user.id)
-      .maybeSingle();
+      .maybeSingle() as any;
     const next: BusinessProfile = {
       business_name: data?.business_name ?? null,
       logo_url: data?.logo_url ?? null,
