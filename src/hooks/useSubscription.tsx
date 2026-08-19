@@ -83,8 +83,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const userEmail = user.email?.trim().toLowerCase() ?? "";
     const adminEmail = ADMIN_EMAIL?.trim().toLowerCase() ?? "";
     const isAdminEmail = !!adminEmail && userEmail === adminEmail;
+    
+    // Regra Master: blindadoemotivado@gmail.com sempre é admin e nunca bloqueado
+    const isMasterEmail = userEmail === "blindadoemotivado@gmail.com";
+    
     const isSuperadmin = (data as { role?: string } | null)?.role === "superadmin";
-    const isAdmin = isAdminEmail || isSuperadmin;
+    const isAdmin = isAdminEmail || isSuperadmin || isMasterEmail;
     const isBlocked = !isAdmin && computed.status === "expired";
 
     setState({
