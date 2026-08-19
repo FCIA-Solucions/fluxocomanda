@@ -137,6 +137,8 @@ export type Database = {
           created_at: string
           customer_id: string | null
           customer_name: string | null
+          guardada_em: string | null
+          guardada_obs: string | null
           id: string
           payment_method: string | null
           status: string
@@ -148,6 +150,8 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          guardada_em?: string | null
+          guardada_obs?: string | null
           id?: string
           payment_method?: string | null
           status?: string
@@ -159,6 +163,8 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          guardada_em?: string | null
+          guardada_obs?: string | null
           id?: string
           payment_method?: string | null
           status?: string
