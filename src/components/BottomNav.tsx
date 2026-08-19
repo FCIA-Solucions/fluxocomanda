@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Home, ClipboardList, Package, Wallet, Store } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -39,6 +40,9 @@ export const BottomNav = () => {
             </NavLink>
           </li>
         ))}
+        <li className="flex flex-1 items-center justify-center">
+          <ThemeToggle />
+        </li>
       </ul>
     </nav>
   );
