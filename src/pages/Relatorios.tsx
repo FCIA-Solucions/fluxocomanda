@@ -618,7 +618,7 @@ function PendenciasPanel() {
         .from("orders")
         .select("total, guardada_em")
         .eq("user_id", user.id)
-        .eq("status", "guardada");
+        .eq("status", "guardada") as any;
       if (!active) return;
       if (error) {
         setLoading(false);
