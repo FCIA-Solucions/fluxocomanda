@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark, Search, X } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, Banknote, Smartphone, CreditCard, MessageCircle, Bookmark, Search, X, Printer } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
 import { useProfile } from "@/hooks/useProfile";
+import { ComandaPrint } from "@/components/print/ComandaPrint";
 import { supabase } from "@/integrations/supabase/client";
 
 function maskPhoneBR(value: string) {
@@ -105,6 +106,7 @@ export default function ComandaDetalhe() {
   const [confirming, setConfirming] = useState(false);
   const [step, setStep] = useState<"payment" | "share">("payment");
   const [phone, setPhone] = useState("");
+  const [customerInfo, setCustomerInfo] = useState<{ name?: string; whatsapp?: string } | null>(null);
   const [closedSnapshot, setClosedSnapshot] = useState<{
     items: OrderItem[];
     total: number;
@@ -139,7 +141,7 @@ export default function ComandaDetalhe() {
     const [orderRes, itemsRes, productsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, user_id, customer_name, customer_id, status, total, payment_method")
+        .select("id, user_id, customer_name, customer_id, status, total, payment_method, guardada_obs")
         .eq("id", id)
         .eq("user_id", effectiveUserId)
         .maybeSingle(),
@@ -162,6 +164,17 @@ export default function ComandaDetalhe() {
     }
     setOrder(orderRes.data as Order);
     setItems((itemsRes.data ?? []) as OrderItem[]);
+
+    // Carregar dados do cliente se houver customer_id
+    if (orderRes.data.customer_id) {
+      const { data: cust } = await supabase
+        .from("customers")
+        .select("name, whatsapp")
+        .eq("id", orderRes.data.customer_id)
+        .maybeSingle();
+      if (cust) setCustomerInfo(cust);
+    }
+
     setProducts(
       (productsRes.data ?? []).map((p) => ({
         id: p.id,
@@ -495,8 +508,17 @@ export default function ComandaDetalhe() {
   if (!order) return null;
 
   return (
-    <AppShell>
-      <div className="pb-20">
+    <div className="relative">
+      {/* Área de Impressão */}
+      <ComandaPrint
+        order={order}
+        items={items}
+        business={business}
+        customer={customerInfo}
+      />
+
+      <AppShell className="print:hidden">
+        <div className="pb-20">
         <button
           onClick={() => navigate("/comandas")}
           className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

@@ -6,6 +6,40 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* ... (outras regras base se houver) */
+}
+
+@media print {
+  @page {
+    margin: 0;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ocultar elementos padrão do app que não têm a classe print:hidden explicitamente */
+  #root > *:not(#comanda-print-area) {
+    display: none !important;
+  }
+
+  #comanda-print-area {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+
 /* FluxoComanda — Dark mode fixo. Todas cores em HSL. */
 
 @layer base {

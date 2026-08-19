@@ -31,6 +31,7 @@ export default function MeuNegocio() {
   const [businessName, setBusinessName] = useState("");
   const [brandColor, setBrandColor] = useState<string>(DEFAULT_BRAND_COLOR);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [printerWidth, setPrinterWidth] = useState("80mm");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -38,6 +39,7 @@ export default function MeuNegocio() {
     setBusinessName(business.business_name ?? "");
     setBrandColor(business.brand_color ?? DEFAULT_BRAND_COLOR);
     setLogoUrl(business.logo_url ?? null);
+    setPrinterWidth(business.printer_width ?? "80mm");
   }, [business]);
 
   const handlePickColor = (value: string) => {
@@ -81,6 +83,7 @@ export default function MeuNegocio() {
         business_name: businessName.trim() || null,
         logo_url: logoUrl,
         brand_color: brandColor,
+        printer_width: printerWidth,
       })
       .eq("id", user.id)
       .select("id");
@@ -250,6 +253,36 @@ export default function MeuNegocio() {
               })}
             </div>
             <p className="text-xs text-muted-foreground">Aplica em botões e destaques do app.</p>
+          </section>
+
+          {/* Configurações de Impressão */}
+          <section className="space-y-3 rounded-2xl bg-card p-4">
+            <Label>Largura da Impressora Térmica</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPrinterWidth("58mm")}
+                className={cn(
+                  "flex flex-col items-center justify-center rounded-xl border-2 p-3 transition-all",
+                  printerWidth === "58mm" ? "border-primary bg-primary/5" : "border-border bg-background"
+                )}
+              >
+                <span className="text-sm font-bold">58 mm</span>
+                <span className="text-[10px] text-muted-foreground">Bobina pequena</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrinterWidth("80mm")}
+                className={cn(
+                  "flex flex-col items-center justify-center rounded-xl border-2 p-3 transition-all",
+                  printerWidth === "80mm" ? "border-primary bg-primary/5" : "border-border bg-background"
+                )}
+              >
+                <span className="text-sm font-bold">80 mm</span>
+                <span className="text-[10px] text-muted-foreground">Bobina padrão</span>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">Ajusta o comprovante para sua impressora.</p>
           </section>
 
           <Button
