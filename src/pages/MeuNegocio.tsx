@@ -77,16 +77,17 @@ export default function MeuNegocio() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { data, error } = await (supabase
+    const response = await (supabase
       .from("profiles")
       .update({
         business_name: businessName.trim() || null,
         logo_url: logoUrl,
         brand_color: brandColor,
         printer_width: printerWidth,
-      })
+      } as any)
       .eq("id", user.id)
       .select("id") as any);
+    const { data, error } = response;
     setSaving(false);
     if (error) {
       toast.error("Não foi possível salvar", { description: error.message });
