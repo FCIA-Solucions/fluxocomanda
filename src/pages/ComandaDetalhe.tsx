@@ -471,7 +471,7 @@ export default function ComandaDetalhe() {
         guardada_em: new Date().toISOString(),
         guardada_obs: guardarObs.trim() || null,
         customer_name: nome,
-      })
+      } as any)
       .eq("id", id);
     setGuardando(false);
     if (error) {
