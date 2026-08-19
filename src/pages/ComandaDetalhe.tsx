@@ -517,7 +517,7 @@ export default function ComandaDetalhe() {
         customer={customerInfo}
       />
 
-      <AppShell className="print:hidden">
+      <AppShell>
         <div className="pb-20">
         <button
           onClick={() => navigate("/comandas")}
