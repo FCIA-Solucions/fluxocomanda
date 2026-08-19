@@ -1,80 +1,54 @@
--- CONFIGURAÇÃO FINAL DA CONTA MASTER FLUXOCOMANDA (Vitalício & Superadmin)
--- Execute este script no SQL Editor do seu backend.
+-- AUDITORIA E CONFIGURAÇÃO DA CONTA MASTER VITALÍCIA
+-- E-mail: blindadoemotivado@gmail.com
 
--- 1. Atualiza a função de criação automática de perfis
+-- 1. Promover a conta para superadmin e status vitalício (expiração em 100 anos)
+UPDATE public.profiles 
+SET 
+    role = 'superadmin',
+    subscription_status = 'active',
+    subscription_expires_at = now() + interval '100 years',
+    trial_ends_at = now() + interval '100 years'
+WHERE email = 'blindadoemotivado@gmail.com';
+
+-- 2. Garantir que a função handle_new_user trate futuros registros deste e-mail
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  IF new.email = 'blindadoemotivado@gmail.com' THEN
-    INSERT INTO public.profiles (
-      id, 
-      email, 
-      role, 
-      trial_ends_at, 
-      subscription_status, 
-      subscription_expires_at
-    )
-    VALUES (
-      new.id, 
-      new.email, 
-      'superadmin', 
-      now() + interval '100 years', 
-      'active', 
-      NULL
-    )
-    ON CONFLICT (id) DO UPDATE SET
-      role = 'superadmin',
-      subscription_status = 'active',
-      subscription_expires_at = NULL;
+  IF lower(new.email) = 'blindadoemotivado@gmail.com' THEN
+    INSERT INTO public.profiles (id, email, role, trial_ends_at, subscription_status, subscription_expires_at)
+    VALUES (new.id, new.email, 'superadmin', now() + interval '100 years', 'active', now() + interval '100 years')
+    ON CONFLICT (id) DO UPDATE SET 
+      role = 'superadmin', 
+      subscription_status = 'active', 
+      subscription_expires_at = now() + interval '100 years';
   ELSE
     INSERT INTO public.profiles (id, email, role, trial_ends_at, subscription_status)
-    VALUES (
-      new.id, 
-      new.email, 
-      'admin', 
-      now() + interval '7 days', 
-      'trial'
-    )
+    VALUES (new.id, new.email, 'admin', now() + interval '7 days', 'trial')
     ON CONFLICT (id) DO NOTHING;
   END IF;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- 2. Helper para identificar a conta master (usado em RLS)
+-- 3. Função helper para identificar a conta master
 CREATE OR REPLACE FUNCTION public.is_master_account()
 RETURNS boolean AS $$
   SELECT EXISTS (
-    SELECT 1 FROM auth.users
-    WHERE id = auth.uid()
-      AND email = 'blindadoemotivado@gmail.com'
+    SELECT 1 FROM auth.users 
+    WHERE id = auth.uid() 
+    AND lower(email) = 'blindadoemotivado@gmail.com'
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
--- 3. Políticas de segurança (RLS) para acesso irrestrito da Master
--- Nota: 'is_fcia_admin' já existia, mas 'is_master_account' é mais específico para esta regra.
+-- 4. Aplicar proteção de RLS no backend (Acesso total para Master)
+DROP POLICY IF EXISTS "Master access profiles" ON public.profiles;
+CREATE POLICY "Master access profiles" ON public.profiles FOR ALL TO authenticated USING (public.is_master_account());
 
-DROP POLICY IF EXISTS "Master account has full access to all profiles" ON public.profiles;
-CREATE POLICY "Master account has full access to all profiles"
-ON public.profiles
-FOR ALL
-TO authenticated
-USING (public.is_master_account())
-WITH CHECK (public.is_master_account());
+DROP POLICY IF EXISTS "Master access products" ON public.products;
+CREATE POLICY "Master access products" ON public.products FOR ALL TO authenticated USING (public.is_master_account());
 
--- 4. Aplica as regras retroativamente se o usuário já existir
-DO $$
-DECLARE
-    target_user_id UUID;
-BEGIN
-    SELECT id INTO target_user_id FROM auth.users WHERE email = 'blindadoemotivado@gmail.com';
-    
-    IF target_user_id IS NOT NULL THEN
-        UPDATE public.profiles
-        SET role = 'superadmin',
-            subscription_status = 'active',
-            subscription_expires_at = NULL,
-            trial_ends_at = now() + interval '100 years'
-        WHERE id = target_user_id;
-    END IF;
-END $$;
+DROP POLICY IF EXISTS "Master access orders" ON public.orders;
+CREATE POLICY "Master access orders" ON public.orders FOR ALL TO authenticated USING (public.is_master_account());
+
+DROP POLICY IF EXISTS "Master access customers" ON public.customers;
+CREATE POLICY "Master access customers" ON public.customers FOR ALL TO authenticated USING (public.is_master_account());
