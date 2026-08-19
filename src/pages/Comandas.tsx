@@ -105,10 +105,10 @@ export default function Comandas() {
       setLoading(false);
       return;
     }
-    const guardadas = (guardadasRes.data ?? []) as Order[];
-    setOpenOrders((openRes.data ?? []) as Order[]);
+    const guardadas = (guardadasRes.data ?? []) as unknown as Order[];
+    setOpenOrders((openRes.data ?? []) as unknown as Order[]);
     setGuardadasOrders(guardadas);
-    setClosedOrders((closedRes.data ?? []) as Order[]);
+    setClosedOrders((closedRes.data ?? []) as unknown as Order[]);
 
     // Buscar itens das guardadas
     if (guardadas.length > 0) {
