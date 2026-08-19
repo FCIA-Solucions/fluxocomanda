@@ -7,6 +7,7 @@ export interface BusinessProfile {
   business_name: string | null;
   logo_url: string | null;
   brand_color: string;
+  printer_width: string;
 }
 
 interface BusinessContextValue {
@@ -20,6 +21,7 @@ const defaultBusiness: BusinessProfile = {
   business_name: null,
   logo_url: null,
   brand_color: DEFAULT_BRAND_COLOR,
+  printer_width: "80mm",
 };
 
 const BusinessContext = createContext<BusinessContextValue | undefined>(undefined);
@@ -47,13 +49,14 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("business_name, logo_url, brand_color")
+      .select("business_name, logo_url, brand_color, printer_width")
       .eq("id", user.id)
-      .maybeSingle();
+      .maybeSingle() as any;
     const next: BusinessProfile = {
       business_name: data?.business_name ?? null,
       logo_url: data?.logo_url ?? null,
       brand_color: data?.brand_color ?? DEFAULT_BRAND_COLOR,
+      printer_width: data?.printer_width ?? "80mm",
     };
     setBusiness(next);
     applyBrandColor(next.brand_color);
