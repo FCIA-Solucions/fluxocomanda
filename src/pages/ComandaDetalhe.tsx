@@ -535,7 +535,7 @@ export default function ComandaDetalhe() {
               </Badge>
             </div>
           }
-          right={
+          actions={
             <Button
               variant="outline"
               size="sm"
