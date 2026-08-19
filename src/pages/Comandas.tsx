@@ -85,20 +85,20 @@ export default function Comandas() {
         .select("id, customer_name, status, total, payment_method, created_at, closed_at, guardada_em, guardada_obs")
         .eq("user_id", effectiveUserId)
         .eq("status", "open")
-        .order("created_at", { ascending: false }),
+        .order("created_at", { ascending: false }) as any,
       supabase
         .from("orders")
         .select("id, customer_name, status, total, payment_method, created_at, closed_at, guardada_em, guardada_obs")
         .eq("user_id", effectiveUserId)
         .eq("status", "guardada")
-        .order("guardada_em", { ascending: true }),
+        .order("guardada_em" as any, { ascending: true }) as any,
       supabase
         .from("orders")
         .select("id, customer_name, status, total, payment_method, created_at, closed_at, guardada_em, guardada_obs")
         .eq("user_id", effectiveUserId)
         .eq("status", "closed")
         .gte("closed_at", todayISO)
-        .order("closed_at", { ascending: false }),
+        .order("closed_at", { ascending: false }) as any,
     ]);
     if (openRes.error || guardadasRes.error || closedRes.error) {
       toast.error("Erro ao carregar comandas");
