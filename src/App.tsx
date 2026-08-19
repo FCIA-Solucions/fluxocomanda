@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Toaster } from "@/components/ui/toaster";
@@ -46,7 +47,8 @@ const App = () => {
 
   return (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <TooltipProvider>
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <Toaster />
       <Sonner />
@@ -79,7 +81,8 @@ const App = () => {
           </ProfileProvider>
         </AuthProvider>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
   );
 };
