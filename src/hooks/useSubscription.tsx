@@ -89,7 +89,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     
     const isSuperadmin = (data as { role?: string } | null)?.role === "superadmin";
     const isAdmin = isAdminEmail || isSuperadmin || isMasterEmail;
-    const isBlocked = !isAdmin && computed.status === "expired";
+    
+    // Bloqueia se expirado E não for Admin/Master
+    const isExpired = computed.status === "expired" && computed.source !== "none";
+    const isBlocked = !isAdmin && isExpired;
 
     setState({
       status: computed.status,
