@@ -172,7 +172,7 @@ export default function ComandaDetalhe() {
         .select("name, whatsapp")
         .eq("id", orderRes.data.customer_id)
         .maybeSingle();
-      if (cust) setCustomerInfo(cust);
+      if (cust) setCustomerInfo({ name: cust.nome, whatsapp: cust.whatsapp });
     }
 
     setProducts(

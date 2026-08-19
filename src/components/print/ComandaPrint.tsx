@@ -1,11 +1,17 @@
-import { Order, OrderItem, BusinessProfile } from "@/types/business";
 import { brl } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+export interface BusinessProfile {
+  business_name: string | null;
+  logo_url: string | null;
+  brand_color: string;
+  printer_width?: string;
+}
 
 interface ComandaPrintProps {
   order: any;
   items: any[];
-  business: BusinessProfile & { printer_width?: string };
+  business: BusinessProfile;
   customer?: { name?: string; whatsapp?: string } | null;
 }
 

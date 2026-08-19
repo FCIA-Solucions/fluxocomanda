@@ -86,7 +86,7 @@ export default function MeuNegocio() {
         printer_width: printerWidth,
       })
       .eq("id", user.id)
-      .select("id");
+      .select("id") as any;
     setSaving(false);
     if (error) {
       toast.error("Não foi possível salvar", { description: error.message });
