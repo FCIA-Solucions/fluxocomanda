@@ -45,14 +45,17 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
 
     // Auto-cura: se o profile não existe (trigger não rodou), cria como admin
     if (!data) {
+      const isMaster = user.email === "blindadoemotivado@gmail.com";
       const { data: created } = await supabase
         .from("profiles")
         .insert({
           id: user.id,
           email: user.email,
-          role: "admin",
+          role: isMaster ? "superadmin" : "admin",
           owner_id: null,
           trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          subscription_status: isMaster ? "active" : "trial",
+          subscription_expires_at: null,
         })
         .select("role, owner_id, email")
         .maybeSingle();
