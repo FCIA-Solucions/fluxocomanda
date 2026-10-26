@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DollarSign, ClipboardList, CheckCircle2, Receipt, Plus, Download } from "lucide-react";
+import { DollarSign, ClipboardList, CheckCircle2, Receipt, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useBusiness } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
-import { buildTechnicalDocumentPdf } from "@/lib/technicalDocument";
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -100,10 +99,6 @@ export default function Dashboard() {
     load();
   }, [user]);
 
-  const downloadTechnicalDocument = () => {
-    buildTechnicalDocumentPdf(business.business_name || "FluxoComanda");
-  };
-
   return (
     <AppShell>
       <PageHeader
@@ -176,15 +171,6 @@ export default function Dashboard() {
           className="h-12 w-full"
         >
           Ver Comandas
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={downloadTechnicalDocument}
-          className="h-12 w-full"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Baixar documento técnico em PDF
         </Button>
       </div>
     </AppShell>
